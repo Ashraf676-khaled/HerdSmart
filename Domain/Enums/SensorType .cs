@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Enums/SensorType.cs
+namespace HerdSmart.Domain.Enums;
 
-namespace Domain.Enums
-{
-    internal class SensorType
-    {
-    }
-}
+public enum SensorType { Temperature, ActivityLevel }

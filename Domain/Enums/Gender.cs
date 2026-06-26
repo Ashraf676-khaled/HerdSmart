@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Enums/Gender.cs
+namespace HerdSmart.Domain.Enums;
 
-namespace Domain.Enums
-{
-    internal class Class1
-    {
-    }
-}
+public enum Gender { Male, Female }

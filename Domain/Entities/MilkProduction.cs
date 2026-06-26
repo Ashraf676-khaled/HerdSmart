@@ -1,10 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Entities/MilkProductionLog.cs
+using HerdSmart.Domain.Enums;
 
-namespace Domain.Entities
+namespace HerdSmart.Domain.Entities;
+
+public class MilkProductionLog : BaseEntity
 {
-    internal class MilkProduction
-    {
-    }
+    public Ulid TenantId { get; set; }
+    public Ulid CattleId { get; set; }
+    public double AmountInLiters { get; set; }
+    public MilkShift Shift { get; set; }
+    public DateTimeOffset LoggedAt { get; set; }
+
+    public Cattle Cattle { get; set; } = null!;
 }
