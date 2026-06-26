@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Enums/CattleStatus.cs
+namespace HerdSmart.Domain.Enums;
 
-namespace Domain.Enums
+public enum CattleStatus
 {
-    internal class CattleStatus
-    {
-    }
+    Active,
+    Dry,
+    Pregnant,
+    Sick,
+    Isolated,
+    Sold,
+    Dead
 }

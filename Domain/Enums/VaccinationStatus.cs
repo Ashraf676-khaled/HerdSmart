@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Enums/VaccinationStatus.cs
+namespace HerdSmart.Domain.Enums;
 
-namespace Domain.Enums
-{
-    internal class VaccinationStatus
-    {
-    }
-}
+public enum VaccinationStatus { Pending, Completed, Overdue }

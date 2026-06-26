@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Enums/UserRole.cs
+namespace HerdSmart.Domain.Enums;
 
-namespace Domain.Enums
-{
-    internal class UserRole
-    {
-    }
-}
+public enum UserRole { Owner, Vet, Worker }

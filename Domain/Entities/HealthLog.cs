@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Entities/HealthLog.cs
+namespace HerdSmart.Domain.Entities;
 
-namespace Domain.Entities
+public class HealthLog : BaseEntity
 {
-    internal class HealthLof
-    {
-    }
+    public Ulid TenantId { get; set; }
+    public Ulid CattleId { get; set; }
+    public string Diagnosis { get; set; } = string.Empty;
+    public string TreatmentPlan { get; set; } = string.Empty;
+    public string? VetNotes { get; set; }
+
+    public Cattle Cattle { get; set; } = null!;
 }

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Enums/MilkShift.cs
+namespace HerdSmart.Domain.Enums;
 
-namespace Domain.Enums
-{
-    internal class MilkShift
-    {
-    }
-}
+public enum MilkShift { Morning, Afternoon, Evening }
