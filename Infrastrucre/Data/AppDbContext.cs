@@ -30,23 +30,12 @@ namespace HerdSmart.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
+
+
+            // 1. طبق الـ Converter الـ  أول حاجة
             var ulidConverter = new ValueConverter<Ulid, string>(
-                v => v.ToString(),
-                v => Ulid.Parse(v));
-
-            // 1. طبق الـ Converter على كل الـ properties أول حاجة
-            foreach (var entityType in builder.Model.GetEntityTypes())
-            {
-                foreach (var property in entityType.GetProperties())
-                {
-                    if (property.ClrType == typeof(Ulid) ||
-                        property.ClrType == typeof(Ulid?))
-                    {
-                        property.SetValueConverter(ulidConverter);
-                    }
-                }
-            }
-
+              v => v.ToString(),
+              v => Ulid.Parse(v));
             // 2. AppUser يدوياً بعد الـ Converter
             builder.Entity<AppUser>(entity =>
             {
