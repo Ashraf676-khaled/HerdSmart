@@ -1,3 +1,4 @@
+using Application;
 using Infrastrucre.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastrucre(builder.Configuration);
 
 var app = builder.Build();
