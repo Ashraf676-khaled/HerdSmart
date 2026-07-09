@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 
 namespace HerdSmart.Infrastructure.Data
 {
-    public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
+    public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid> ,IApplicationDbContext 
     {
         private readonly ITenantProvider? _tenantProvider;
 

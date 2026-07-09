@@ -1,14 +1,15 @@
-using System.Reflection;
+﻿// Application/DependencyInjection.cs
 using Application.Common.Behaviors;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-
-namespace Application;
+using System.Reflection;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(
+        this IServiceCollection services)
     {
+        services.AddAutoMapper(cfg => cfg.AddMaps(Assembly.GetExecutingAssembly()));
         var assembly = Assembly.GetExecutingAssembly();
 
         services.AddMediatR(cfg =>
@@ -19,9 +20,7 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(PerformanceBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
-
         services.AddValidatorsFromAssembly(assembly);
-
         return services;
     }
 }
