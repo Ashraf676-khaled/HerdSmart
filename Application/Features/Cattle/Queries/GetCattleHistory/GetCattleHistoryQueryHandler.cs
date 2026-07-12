@@ -29,25 +29,25 @@ public class GetCattleHistoryQueryHandler
     {
         var tenantId = _tenantProvider.GetTenantId();
 
-        // 1. تحقق إن البقرة موجودة
+        // 1. check cattle
         var exists = await _context.Cattle
             .AnyAsync(c => c.Id == request.CattleId && c.TenantId == tenantId, cancellationToken);
 
         if (!exists)
             throw new NotFoundException("Cattle not found");
 
-        // 2. Health Logs: نجيب البيانات الأول للداتابيز ثم نشكلها في الميموري
+        // 2. Health Logs
         var rawHealthLogs = await _context.HealthLogs
             .Where(h => h.CattleId == request.CattleId && h.TenantId == tenantId)
             .AsNoTracking()
-            .ToListAsync(cancellationToken); // ⬅️ هنا الداتا رجعت للميموري بأمان
+            .ToListAsync(cancellationToken); 
 
         var healthLogs = rawHealthLogs
             .OrderByDescending(h => h.CreatedAt)
             .Select(h => new HealthLogDto(h.Id, h.Diagnosis, h.TreatmentPlan, h.VetNotes, h.CreatedAt))
             .ToList();
 
-        // 3. Milk Logs: نفس الفكرة فصل الداتابيز عن الميموري
+        // 3. Milk Logs  
         var rawMilkLogs = await _context.MilkProductionLogs
             .Where(m => m.CattleId == request.CattleId && m.TenantId == tenantId)
             .AsNoTracking()
@@ -58,9 +58,9 @@ public class GetCattleHistoryQueryHandler
             .Select(m => new MilkLogDto(m.Id, m.AmountInLiters, m.Shift, m.LoggedAt))
             .ToList();
 
-        // 4. Vaccinations: الترتيب والـ Include للـ Vaccine Name
+        // 4. Vaccinations
         var rawVaccinations = await _context.VaccinationSchedules
-            .Include(v => v.Vaccine) // مهم جداً عشان الـ Navigation Property
+            .Include(v => v.Vaccine)
             .Where(v => v.CattleId == request.CattleId && v.TenantId == tenantId)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
@@ -69,7 +69,7 @@ public class GetCattleHistoryQueryHandler
             .OrderByDescending(v => v.ScheduledDate)
             .Select(v => new VaccinationDto(
                 v.Id,
-                v.Vaccine?.Name ?? "Unknown", // حماية لو الاسم null
+                v.Vaccine?.Name ?? "Unknown",
                 v.ScheduledDate,
                 v.AdministeredDate,
                 v.Status))
