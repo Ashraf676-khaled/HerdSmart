@@ -7,12 +7,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 using Serilog;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllers();
-builder.Services.AddDistributedMemoryCache();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters
+            .Add(new JsonStringEnumConverter());
+    }); builder.Services.AddDistributedMemoryCache();
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
