@@ -6,9 +6,9 @@ using HerdSmart.Domain.Enums;
 
 namespace Application.Common.Mappings
 {
-    public class MappingProfile : Profile
+    public class AuthMappingProfile : Profile
     {
-        public MappingProfile()
+        public AuthMappingProfile()
         {
             // RegisterCommand → Tenant + AppUser
             CreateMap<RegisterCommand, Tenant>()
@@ -22,6 +22,7 @@ namespace Application.Common.Mappings
             // CreateUserCommand → AppUser (لـ Vet/Worker)
             CreateMap<CreateUserCommand, AppUser>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email));
+
         }
     }
 }

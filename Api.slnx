@@ -2,6 +2,6 @@
   <Project Path="Api/Api.csproj" />
   <Project Path="Application/Application.csproj" />
   <Project Path="Domain/Domain.csproj" />
-  <Project Path="Infrastrucre/Infrastrucre.csproj" />
+  <Project Path="Infrastrucre/Infrastructure.csproj" />
   <Project Path="UnitTest/UnitTest.csproj" />
 </Solution>
