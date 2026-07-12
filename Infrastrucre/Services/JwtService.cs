@@ -26,7 +26,7 @@ public class JwtService : IJwtService
     {
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim("TenantId", user.TenantId.ToString()),
@@ -72,6 +72,7 @@ public class JwtService : IJwtService
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
+        tokenHandler.InboundClaimTypeMap.Clear();
 
         var principal = tokenHandler.ValidateToken(
             token,

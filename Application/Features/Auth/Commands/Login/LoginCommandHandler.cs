@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces;
+﻿using Application.Common.Exceptions;
+using Application.Common.Interfaces;
 using Application.Features.Auth.Dtos;
 using HerdSmart.Domain.Entities;
 using MediatR;
@@ -27,11 +28,11 @@ namespace Application.Features.Auth.Commands.Login
             //check email
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
-                throw new UnauthorizedAccessException("Invalid email or password");
+                throw new UnauthorizedException("Invalid email or password");
             //check password
             var isValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if(!isValid)
-                throw new UnauthorizedAccessException("Invalid email or password");
+                throw new UnauthorizedException("Invalid email or password");
             // 3. Generate Tokens
             var (accessToken, refreshToken) = _jwtService.GenerateTokens(user);
             await _refreshTokenService.SaveRefreshTokenAsync(user.Id, refreshToken);

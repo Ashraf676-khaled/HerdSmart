@@ -6,6 +6,7 @@ using HerdSmart.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
 
 namespace Application.Features.Auth.Commands.RefreshToken;
@@ -38,8 +39,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         if (principal is null)
             throw new UnauthorizedException("Invalid access token");
 
-        // 2. جيب الـ UserId من الـ Claims
+
         var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
         if (!Guid.TryParse(userIdClaim, out var userId))
             throw new UnauthorizedException("Invalid token claims");
 

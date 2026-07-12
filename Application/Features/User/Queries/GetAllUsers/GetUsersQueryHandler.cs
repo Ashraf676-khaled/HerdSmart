@@ -28,7 +28,8 @@ public class GetUsersQueryHandler
         var tenantId = _tenantProvider.GetTenantId();
 
         var query = _context.Users
-            .Where(u => u.TenantId == tenantId&&u.LockoutEnd==null)
+            .Where(u => u.TenantId == tenantId
+              && (u.LockoutEnd == null || u.LockoutEnd < DateTimeOffset.UtcNow))
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
