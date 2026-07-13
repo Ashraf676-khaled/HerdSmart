@@ -7,6 +7,7 @@ public class HealthLog : BaseEntity
     public Ulid CattleId { get; set; }
     public string Diagnosis { get; set; } = string.Empty;
     public string TreatmentPlan { get; set; } = string.Empty;
+    public bool IsContagious { get; set; }
     public string? VetNotes { get; set; }
 
     public Cattle Cattle { get; set; } = null!;
