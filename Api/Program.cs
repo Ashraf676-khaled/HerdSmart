@@ -8,6 +8,7 @@ using Infrastructure.Services.BackgroundJobs.Extensions;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Text.Json.Serialization;
+using Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,9 @@ builder.Host.UseSerilog();
 //Dependincy Injection
 builder.Services.AddApplication();
 builder.Services.AddInfrastrucre(builder.Configuration);
+
+//Signalir
+builder.Services.AddSignalR();
 
 //Hangfire
 builder.Services.AddHangfire(config => config
@@ -77,5 +81,6 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 app.RegisterRecurringJobs();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

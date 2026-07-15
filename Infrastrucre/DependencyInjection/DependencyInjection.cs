@@ -17,32 +17,34 @@ namespace Infrastrucre.DependencyInjection
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddInfrastrucre
-            (this IServiceCollection services
-            , IConfiguration configuration
-            )
+        public static IServiceCollection AddInfrastrucre(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
-            //connection to db
+            // 1. Connection to DB
             var connectionString = configuration.GetConnectionString("default");
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-            //connection to redis
+
+            // 2. Connection to Redis
             var redisConnectionString = configuration.GetConnectionString("Redis");
-            services.AddStackExchangeRedisCache(
-                options =>
-                {
-                    options.Configuration = redisConnectionString;
-                    options.InstanceName = "HerdSmart_";
-                });
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "HerdSmart_";
+            });
+
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-            //jwt
+
+            // 3. JWT Settings & Services
             services.Configure<Jwt>(configuration.GetSection("JWT"));
             services.AddScoped<IJwtService, JwtService>();
-            //Identity
-            services.AddIdentity<AppUser, IdentityRole <Guid>>()
+
+            // 4. Identity
+            services.AddIdentity<AppUser, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-            // JWT Authentication
 
+            // 5. JWT Authentication Setup
             var jwtSettings = configuration.GetSection("JWT").Get<Jwt>()
                 ?? throw new InvalidOperationException("JWT settings are missing in appsettings.json!");
 
@@ -54,8 +56,25 @@ namespace Infrastrucre.DependencyInjection
             })
             .AddJwtBearer(options =>
             {
+                // استقبال الـ Token من الـ Query String للـ SignalR Hubs
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
+
                 options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
+                options.RequireHttpsMetadata = false; // للتطوير فقط، في الـ Production بنخليها true
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -68,13 +87,16 @@ namespace Infrastrucre.DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
-            //Background Jobs
+
+            // 6. Background Jobs
             services.AddScoped<MarkOverdueVaccinationsJob>();
             services.AddScoped<AutoGenerateVaccinationSchedulesJob>();
-            //For MultiTenancy
+
+            // 7. For MultiTenancy
             services.AddHttpContextAccessor();
-            services.AddScoped<ITenantProvider,TenantProvider>();
+            services.AddScoped<ITenantProvider, TenantProvider>();
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+
             return services;
         }
     }
