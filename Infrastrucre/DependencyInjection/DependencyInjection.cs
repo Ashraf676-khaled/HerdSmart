@@ -3,6 +3,7 @@ using HerdSmart.Domain.Entities;
 using HerdSmart.Infrastructure.Data;
 using HerdSmart.Infrastructure.Services;
 using Infrastrucre.Settings;
+using Infrastructure.Services.BackgroundJobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,9 @@ namespace Infrastrucre.DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
+            //Background Jobs
+            services.AddScoped<MarkOverdueVaccinationsJob>();
+            services.AddScoped<AutoGenerateVaccinationSchedulesJob>();
             //For MultiTenancy
             services.AddHttpContextAccessor();
             services.AddScoped<ITenantProvider,TenantProvider>();
