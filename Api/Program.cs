@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Text.Json.Serialization;
+using Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,28 @@ builder.Host.UseSerilog();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastrucre(builder.Configuration);
+<<<<<<< Updated upstream
+=======
+
+//Signalir
+builder.Services.AddSignalR();
+
+//Hangfire
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("default")
+, new SqlServerStorageOptions
+{
+    CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+    QueuePollInterval = TimeSpan.Zero,
+    UseRecommendedIsolationLevel = true,
+    DisableGlobalLocks = true
+}));
+
+>>>>>>> Stashed changes
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -52,5 +75,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

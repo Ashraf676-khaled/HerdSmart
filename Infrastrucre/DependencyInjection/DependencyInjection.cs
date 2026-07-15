@@ -37,7 +37,7 @@ namespace Infrastrucre.DependencyInjection
             services.Configure<Jwt>(configuration.GetSection("JWT"));
             services.AddScoped<IJwtService, JwtService>();
             //Identity
-            services.AddIdentity<AppUser, IdentityRole <Guid>>()
+            services.AddIdentity<AppUser, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
             // JWT Authentication
@@ -51,22 +51,49 @@ namespace Infrastrucre.DependencyInjection
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(options =>
-            {
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
+           .AddJwtBearer(options =>
+           {
+               options.Events = new JwtBearerEvents
+               {
+                   OnMessageReceived = context =>
+                   {
+                       var accessToken = context.Request.Query["access_token"];
+                       var path = context.HttpContext.Request.Path;
 
+<<<<<<< Updated upstream
                     ValidIssuer = jwtSettings.Issuer,
                     ValidAudience = jwtSettings.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
+=======
+                       if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                       {
+                           context.Token = accessToken;
+                       }
+
+                       return Task.CompletedTask; 
+                   }
+               };
+
+               options.SaveToken = true;
+               options.RequireHttpsMetadata = true;
+               options.TokenValidationParameters = new TokenValidationParameters
+               {
+                   ValidateIssuer = true,
+                   ValidateAudience = true,
+                   ValidateLifetime = true,
+                   ValidateIssuerSigningKey = true,
+
+                   ValidIssuer = jwtSettings.Issuer,
+                   ValidAudience = jwtSettings.Audience,
+                   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+               };
+           });
+            //Background Jobs
+            services.AddScoped<MarkOverdueVaccinationsJob>();
+            services.AddScoped<AutoGenerateVaccinationSchedulesJob>();
+>>>>>>> Stashed changes
             //For MultiTenancy
             services.AddHttpContextAccessor();
             services.AddScoped<ITenantProvider,TenantProvider>();
