@@ -7,11 +7,13 @@ using Application.Features.Vaccinations.Commands.RescheduleVaccination;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace HerdSmart.Api.Controllers;
 
 [Route("api/vaccinations")]
+[EnableRateLimiting("global-limit")]
 [ProducesResponseType(StatusCodes.Status401Unauthorized)]
 [ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class VaccinationsController : ApiControllerBase

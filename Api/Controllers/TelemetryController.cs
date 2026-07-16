@@ -5,11 +5,13 @@ using HerdSmart.Domain.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace HerdSmart.Api.Controllers;
 
 [Route("api/telemetry")]
+[EnableRateLimiting("telemetry-limit")]
 public class TelemetryController(IConfiguration configuration) : ApiControllerBase
 {
     [HttpPost("ingest")]

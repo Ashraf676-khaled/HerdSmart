@@ -3,11 +3,13 @@ using Application.Features.HealthLog.Commands.CreateHealthLog;
 using Application.Features.HealthLogs.Commands.UpdateHealthLog;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace HerdSmart.Api.Controllers;
 
 [Route("api/health-logs")]
+[EnableRateLimiting("global-limit")]
 [ProducesResponseType(StatusCodes.Status401Unauthorized)]
 [ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class HealthLogsController : ApiControllerBase

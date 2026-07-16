@@ -5,11 +5,13 @@ using Application.Features.Vaccines.Commands.DeleteVaccine;
 using Application.Features.Vaccines.Commands.UpdateVaccine;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace HerdSmart.Api.Controllers;
 
 [Route("api/vaccines")]
+[EnableRateLimiting("global-limit")]
 [ProducesResponseType(StatusCodes.Status401Unauthorized)]
 [ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class VaccinesController : ApiControllerBase

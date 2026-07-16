@@ -5,11 +5,13 @@ using Application.Features.Auth.Commands.Register;
 using Application.Features.Auth.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace Api.Controllers;
 
 [Route("api/Auth")]
+[EnableRateLimiting("auth-limit")]
 
 public class AuthController : ApiControllerBase   
 {

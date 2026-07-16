@@ -5,9 +5,12 @@ using Hangfire;
 using Hangfire.SqlServer;
 using Infrastrucre.DependencyInjection;
 using Infrastructure.Services.BackgroundJobs.Extensions;
+using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
 using Serilog;
+using System.Security.Claims;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Web.Hubs;
 using Web.Realtime;
 
@@ -53,16 +56,76 @@ builder.Services.AddHangfire(config => config
     DisableGlobalLocks = true
 }));
 
-//cors
+// CORS configuration
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.SetIsOriginAllowed(origin => true) 
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials(); 
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.SetIsOriginAllowed(origin => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+
+            if (allowedOrigins != null && allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "AllowedOrigins configuration is missing or empty in Production.");
+            }
+        }
     });
+});
+
+//RateLimiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("auth-limit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("telemetry-limit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Request.Headers["X-Api-Key"].ToString() is { Length: > 0 } key
+                ? key
+                : context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 5
+            }));
+
+    options.AddPolicy("global-limit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User.Identity?.IsAuthenticated == true
+                ? context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "anonymous"
+                : context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 10
+            }));
 });
 
 builder.Services.AddOpenApi();
@@ -86,6 +149,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseRouting();
+app.UseRateLimiter();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -95,7 +159,6 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     Authorization = new[] { new HangfireAuthorizationFilter() }
 });
 app.RegisterRecurringJobs();
-
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
