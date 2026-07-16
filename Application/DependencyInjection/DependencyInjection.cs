@@ -1,5 +1,6 @@
 ﻿// Application/DependencyInjection.cs
 using Application.Common.Behaviors;
+using Application.Common.Interfaces;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;

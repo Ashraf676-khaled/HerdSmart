@@ -1,14 +1,15 @@
 using Api.Infrastructure;
 using API.Middleware;
+using Application.Common.Interfaces;
 using Hangfire;
 using Hangfire.SqlServer;
 using Infrastrucre.DependencyInjection;
-using Infrastructure.Services.BackgroundJobs;
 using Infrastructure.Services.BackgroundJobs.Extensions;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Text.Json.Serialization;
 using Web.Hubs;
+using Web.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,7 @@ builder.Services.AddInfrastrucre(builder.Configuration);
 
 //Signalir
 builder.Services.AddSignalR();
+builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 
 //Hangfire
 builder.Services.AddHangfire(config => config
@@ -50,6 +52,18 @@ builder.Services.AddHangfire(config => config
     UseRecommendedIsolationLevel = true,
     DisableGlobalLocks = true
 }));
+
+//cors
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.SetIsOriginAllowed(origin => true) 
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); 
+    });
+});
 
 builder.Services.AddOpenApi();
 
@@ -71,6 +85,8 @@ app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
+app.UseRouting();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

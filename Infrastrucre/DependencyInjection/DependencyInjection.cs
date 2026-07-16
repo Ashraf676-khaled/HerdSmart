@@ -1,4 +1,5 @@
 ﻿using Application.Common.Interfaces;
+using Application.Features.Telemetry.Jobs;
 using HerdSmart.Domain.Entities;
 using HerdSmart.Infrastructure.Data;
 using HerdSmart.Infrastructure.Services;
@@ -91,6 +92,7 @@ namespace Infrastrucre.DependencyInjection
             // 6. Background Jobs
             services.AddScoped<MarkOverdueVaccinationsJob>();
             services.AddScoped<AutoGenerateVaccinationSchedulesJob>();
+            services.AddScoped<CleanupResolvedTelemetryAlertsJob>();
 
             // 7. For MultiTenancy
             services.AddHttpContextAccessor();

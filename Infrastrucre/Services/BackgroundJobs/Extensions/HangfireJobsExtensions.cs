@@ -1,4 +1,5 @@
-﻿using Hangfire;
+﻿using Application.Features.Telemetry.Jobs;
+using Hangfire;
 using Infrastructure.Services.BackgroundJobs;
 using Microsoft.AspNetCore.Builder;
 
@@ -18,5 +19,10 @@ public static class HangfireJobsExtensions
             "auto-generate-vaccination-schedules",
             job => job.ExecuteAsync(),
             Cron.Daily(1, 0));
+
+        RecurringJob.AddOrUpdate<CleanupResolvedTelemetryAlertsJob>(
+    "cleanup-resolved-telemetry-alerts",
+    job => job.ExecuteAsync(CancellationToken.None),
+    "0 3 1 * *");
     }
 }
