@@ -1,4 +1,5 @@
 ﻿using Application.Common.Interfaces;
+using Application.Features.Telemetry.Jobs;
 using HerdSmart.Domain.Entities;
 using HerdSmart.Infrastructure.Data;
 using HerdSmart.Infrastructure.Services;
@@ -87,10 +88,6 @@ namespace Infrastrucre.DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
-
-            // 6. Background Jobs
-            services.AddScoped<MarkOverdueVaccinationsJob>();
-            services.AddScoped<AutoGenerateVaccinationSchedulesJob>();
 
             // 7. For MultiTenancy
             services.AddHttpContextAccessor();
