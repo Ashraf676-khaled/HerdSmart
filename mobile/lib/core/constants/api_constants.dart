@@ -9,7 +9,7 @@ class ApiConstants {
   ///
   /// NOTE: keep the scheme (http/https) and port here. Cleartext (http)
   /// traffic is enabled in the Android manifest for local testing.
-  static const String baseUrl = 'http://192.168.100.8:7026';
+  static const String baseUrl = 'http://192.168.100.8:5168';
 
   // ---- Endpoints -----------------------------------------------------------
 

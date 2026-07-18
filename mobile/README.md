@@ -10,7 +10,7 @@ moving to Phase 2 (release build).
 The backend base URL is a single global constant:
 
 - `lib/core/constants/api_constants.dart` → `ApiConstants.baseUrl`
-  (currently `http://192.168.100.8:7026`).
+  (currently `http://192.168.100.8:5168`).
 
 Cleartext (http) traffic and the internet permission are enabled for local
 testing in `android/app/src/main/AndroidManifest.xml`
