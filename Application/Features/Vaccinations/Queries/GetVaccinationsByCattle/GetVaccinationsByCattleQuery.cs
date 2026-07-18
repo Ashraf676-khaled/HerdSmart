@@ -1,0 +1,8 @@
+﻿
+using Application.Features.Vaccinations;
+using MediatR;
+
+public record GetVaccinationsByCattleQuery(
+    Ulid CattleId,
+    int Page = 1,
+    int PageSize = 10) : IRequest<PaginatedResult<VaccinationScheduleResponse>>;

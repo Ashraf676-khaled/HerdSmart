@@ -6,12 +6,14 @@ using Application.Features.Users.Queries.GetUserById;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace Api.Controllers;
 
 //[Authorize(Roles = "Owner")]
 [Route("api/users")]
+[EnableRateLimiting("global-limit")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Owner")]
 public class UsersController : ApiControllerBase
 {

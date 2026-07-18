@@ -82,12 +82,19 @@ namespace HerdSmart.Infrastructure.Data
                 ? _tenantProvider.GetTenantId()
                 : (Ulid?)null;
 
+            // 1. Get the UserId as Guid? directly since CreatedBy is Guid?
+            var userId = _tenantProvider?.IsAuthenticated() == true
+                ? _tenantProvider.GetUserId()
+                : (Guid?)null;
+
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
                 switch (entry.State)
                 {
                     case EntityState.Added:
                         entry.Entity.CreatedAt = DateTimeOffset.UtcNow;
+                        entry.Entity.CreatedBy = userId; // Safe assignment without conversion!
+
                         if (tenantId.HasValue)
                         {
                             var prop = entry.Entity.GetType().GetProperty("TenantId");

@@ -5,11 +5,13 @@ using Application.Features.Cattle.Dtos;
 using HerdSmart.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Controllers;
 
 namespace HerdSmart.Api.Controllers;
 
 [Route("api/[controller]")]
+[EnableRateLimiting("global-limit")]
 [ProducesResponseType(StatusCodes.Status401Unauthorized)]
 [ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class CattleController : ApiControllerBase

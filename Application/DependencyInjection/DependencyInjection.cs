@@ -9,8 +9,10 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(
         this IServiceCollection services)
     {
-        services.AddAutoMapper(cfg => cfg.AddMaps(typeof(DependencyInjection).Assembly));
-        var assembly = Assembly.GetExecutingAssembly();
+        var assembly = typeof(DependencyInjection).Assembly;
+        services.AddValidatorsFromAssembly(assembly);
+
+        services.AddAutoMapper(cfg => cfg.AddMaps(assembly));
 
         services.AddMediatR(cfg =>
         {
@@ -20,7 +22,7 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(PerformanceBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
-        services.AddValidatorsFromAssembly(assembly);
+      
         return services;
     }
 }
