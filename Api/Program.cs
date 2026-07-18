@@ -5,10 +5,13 @@ using Hangfire;
 using Hangfire.SqlServer;
 using Infrastrucre.DependencyInjection;
 using Infrastructure.Services.BackgroundJobs.Extensions;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Web.Hubs;
@@ -36,6 +39,7 @@ builder.Host.UseSerilog();
 //Dependincy Injection
 builder.Services.AddApplication();
 builder.Services.AddInfrastrucre(builder.Configuration);
+builder.Services.AddScoped<IHeartbeatTracker, CacheHeartbeatTracker>();
 
 //Signalir
 builder.Services.AddSignalR();
@@ -161,5 +165,32 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 app.RegisterRecurringJobs();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
+// بعد app.MapControllers() تقريباً
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = WriteHealthCheckResponse
+});
+
+static async Task WriteHealthCheckResponse(HttpContext context, HealthReport report)
+{
+    context.Response.ContentType = "application/json";
+
+    var response = new
+    {
+        status = report.Status.ToString(), // Healthy, Degraded, Unhealthy
+        totalDurationMs = report.TotalDuration.TotalMilliseconds,
+        checks = report.Entries.Select(entry => new
+        {
+            name = entry.Key,
+            status = entry.Value.Status.ToString(),
+            durationMs = entry.Value.Duration.TotalMilliseconds,
+            description = entry.Value.Description,
+            error = entry.Value.Exception?.Message
+        })
+    };
+
+    await context.Response.WriteAsync(
+        JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true }));
+}
 
 app.Run();

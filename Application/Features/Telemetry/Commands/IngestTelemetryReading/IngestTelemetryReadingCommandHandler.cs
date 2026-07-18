@@ -11,12 +11,15 @@ namespace Application.Features.Telemetry.Commands.IngestTelemetryReading;
 public class IngestTelemetryReadingCommandHandler(
     IApplicationDbContext context,
     IRealtimeNotifier notifier,
-    ILogger<IngestTelemetryReadingCommandHandler> logger)
+    ILogger<IngestTelemetryReadingCommandHandler> logger,
+    IHeartbeatTracker heartbeatTracker
+    )
     : IRequestHandler<IngestTelemetryReadingCommand, TelemetryIngestResult>
 {
     public async Task<TelemetryIngestResult> Handle(
         IngestTelemetryReadingCommand request, CancellationToken cancellationToken)
     {
+        await heartbeatTracker.RecordAsync("global", cancellationToken);
         var cattle = await context.Cattle
             .FirstOrDefaultAsync(c => c.Id == request.CattleId, cancellationToken)
             ?? throw new NotFoundException($"Cattle with ID {request.CattleId} was not found.");

@@ -1,17 +1,21 @@
 ﻿using Application.Common.Interfaces;
-using Application.Features.Telemetry.Jobs;
+using Application.Features.Cattle.HealthChecks;
+using Application.Features.HealthLogs.HealthChecks;
+using Application.Features.MilkLogs.HealthChecks;
+using Application.Features.Telemetry.HealthChecks;
+using Application.Features.Vaccinations.HealthChecks;
 using HerdSmart.Domain.Entities;
 using HerdSmart.Infrastructure.Data;
 using HerdSmart.Infrastructure.Services;
 using Infrastrucre.Settings;
-using Infrastructure.Services.BackgroundJobs;
+using Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 using System.Text;
 
 namespace Infrastrucre.DependencyInjection
@@ -33,6 +37,8 @@ namespace Infrastrucre.DependencyInjection
                 options.Configuration = redisConnectionString;
                 options.InstanceName = "HerdSmart_";
             });
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+             ConnectionMultiplexer.Connect("localhost:6379")); 
 
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
@@ -57,7 +63,6 @@ namespace Infrastrucre.DependencyInjection
             })
             .AddJwtBearer(options =>
             {
-                // استقبال الـ Token من الـ Query String للـ SignalR Hubs
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -88,6 +93,33 @@ namespace Infrastrucre.DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
+            // HealthCheck
+            var healthChecksBuilder = services.AddHealthChecks()
+                .AddSqlServer(
+                    configuration.GetConnectionString("default")!,
+                    name: "database",
+                    tags: ["ready"])
+                .AddHangfire(options =>
+                {
+                    options.MinimumAvailableServers = 1;
+                }, name: "hangfire", tags: ["ready"]);
+
+            var redisConnection = configuration.GetConnectionString("Redis");
+            if (!string.IsNullOrEmpty(redisConnection))
+            {
+                healthChecksBuilder.AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+            }
+
+            services.AddHealthChecks()
+              .AddCheck<TelemetryIngestionHealthCheck>("telemetry-ingestion", tags: ["business"])
+              .AddCheck<HangfireJobsHealthCheck>("hangfire-jobs", tags: ["business"])
+              .AddCheck<AuthTokenStoreHealthCheck>("auth-token-store", tags: ["business"])
+              .AddCheck<CattleDataHealthCheck>("cattle-data", tags: ["business"])
+              .AddCheck<HealthLogDataHealthCheck>("health-log-data", tags: ["business"])
+              .AddCheck<MilkProductionHealthCheck>("milk-production-data", tags: ["business"])
+              .AddCheck<VaccinationScheduleHealthCheck>("vaccination-schedule-data", tags: ["business"]);
+            
+
 
             // 7. For MultiTenancy
             services.AddHttpContextAccessor();
