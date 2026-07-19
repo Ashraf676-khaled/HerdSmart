@@ -1,0 +1,44 @@
+services:
+  # 1. حاوية الـ Redis
+  herdsmart-redis:
+    image: redis:alpine
+    container_name: herdsmart-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - herdsmart-network
+
+  # 2. حاوية الـ API
+  herdsmart-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: herdsmart-api
+    ports:
+      - "8081:8080"
+    depends_on:
+      - herdsmart-redis
+    networks:
+      - herdsmart-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # سطر الـ Redis السحري
+      - ConnectionStrings__Redis=herdsmart-redis:6379
+      
+      # سطر الداتابيز الحقيقي مطابق لـ appsettings.json بحروف صغيرة
+      - ConnectionStrings__default=Data Source=SQL8011.site4now.net;Initial Catalog=db_acc36c_herdsmart;User Id=db_acc36c_herdsmart_admin;Password=Ashraf@171;TrustServerCertificate=True;
+      
+      # التعديل الجديد: باصينا الـ AllowedOrigins كـ Array للدوكر
+      - AllowedOrigins__0=https://herdsmart.com
+      - AllowedOrigins__1=https://admin.herdsmart.com
+
+      # قيم الـ JWT والـ IoT الحقيقية من ملف الـ JSON الخاص بك
+      - JWT__Key=HerdSmart_Secr3t_K3y_2026_@bSolute_Secur1ty_Long_Enough!!
+      - JWT__Issuer=HerdSmart
+      - JWT__Audience=HerdSmart-Client
+      - JWT__ExpiryInMinutes=60
+      - IoT__ApiKey=HS_IoT_Secure_Gateway_Key_2026_@uthenticated!
+
+networks:
+  herdsmart-network:
+    driver: bridge
