@@ -9,8 +9,7 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
     {
         var httpContext = context.GetHttpContext();
 
-        //return httpContext.User.Identity?.IsAuthenticated == true &&
-        //       httpContext.User.IsInRole("Owner");
-        return true;
+        return httpContext.User.Identity?.IsAuthenticated == true &&
+               httpContext.User.IsInRole("Owner");
     }
 }
