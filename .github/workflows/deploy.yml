@@ -1,0 +1,34 @@
+name: Deploy HerdSmart API to runasp.net
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # عدل الإصدار حسب مشروعك (مثلاً 8.0 أو 7.0)
+
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    - name: Publish Web API
+      run: dotnet publish --configuration Release --output ./publish
+
+    - name: Sync FTP Files
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish/
+        server-dir: / # الـ Root Directory للـ FTP
