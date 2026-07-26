@@ -28,7 +28,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login(
-        LoginCommand command,
+       [FromForm] LoginCommand command,
         CancellationToken cancellationToken)
     {
         var result = await Sender.Send(command, cancellationToken);
