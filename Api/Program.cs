@@ -67,23 +67,14 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        if (builder.Environment.IsDevelopment())
-        {
-            policy.SetIsOriginAllowed(origin => true)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        }
-        else
-        {
-            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
-                                 ?? new[] { "https://herdsmart.runasp.net", "http://herdsmart.runasp.net" };
-
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        }
+        policy.WithOrigins(
+                    "https://ashraf676-khaled.github.io",
+                    "https://herdsmart.runasp.net",
+                    "http://localhost:5500",
+                    "http://127.0.0.1:5500"
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
