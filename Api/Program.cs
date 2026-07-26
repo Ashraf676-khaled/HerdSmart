@@ -63,19 +63,19 @@ builder.Services.AddHangfire(config => config
     }));
 
 // CORS Configuration
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("ProductionCorsPolicy", policy =>
-    {
-        policy.WithOrigins(
-                    "https://ashraf676-khaled.github.io",
-                    "http://localhost:5500",
-                    "http://127.0.0.1:5500"
-              )
-              .AllowAnyHeader() 
-              .AllowAnyMethod();
-    });
-});
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("ProductionCorsPolicy", policy =>
+//    {
+//        policy.WithOrigins(
+//                    "https://ashraf676-khaled.github.io",
+//                    "http://localhost:5500",
+//                    "http://127.0.0.1:5500"
+//              )
+//              .AllowAnyHeader() 
+//              .AllowAnyMethod();
+//    });
+//});
 
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
@@ -135,7 +135,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
-app.UseCors("ProductionCorsPolicy");
+//app.UseCors("ProductionCorsPolicy");
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
