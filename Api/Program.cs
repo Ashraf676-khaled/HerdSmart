@@ -65,16 +65,15 @@ builder.Services.AddHangfire(config => config
 // CORS Configuration
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("ProductionCorsPolicy", policy =>
     {
         policy.WithOrigins(
                     "https://ashraf676-khaled.github.io",
-                    "https://herdsmart.runasp.net",
                     "http://localhost:5500",
                     "http://127.0.0.1:5500"
               )
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+              .WithHeaders("Content-Type", "Authorization", "X-Requested-With", "Accept")
+              .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
     });
 });
 
@@ -138,7 +137,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseRouting();
 app.UseRateLimiter();
-app.UseCors();
+app.UseCors("ProductionCorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
