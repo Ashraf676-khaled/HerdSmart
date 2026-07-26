@@ -72,9 +72,8 @@ builder.Services.AddCors(options =>
                     "http://localhost:5500",
                     "http://127.0.0.1:5500"
               )
-              .WithOrigins("https://ashraf676-khaled.github.io", "http://localhost:5500")
-              .WithHeaders("Content-Type", "Authorization", "X-Requested-With", "Accept")
-              .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+              .AllowAnyHeader() 
+              .AllowAnyMethod();
     });
 });
 
@@ -136,9 +135,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseCors("ProductionCorsPolicy");
 app.UseRouting();
 app.UseRateLimiter();
-app.UseCors("ProductionCorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
