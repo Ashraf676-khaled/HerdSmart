@@ -17,17 +17,20 @@ public class IngestTelemetryReadingCommandHandlerTests
     private readonly Mock<IRealtimeNotifier> _notifierMock;
     private readonly Mock<ILogger<IngestTelemetryReadingCommandHandler>> _loggerMock;
     private readonly IngestTelemetryReadingCommandHandler _handler;
+    private readonly Mock<IHeartbeatTracker> _heartbeatTrackerMock;
 
     public IngestTelemetryReadingCommandHandlerTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
         _notifierMock = new Mock<IRealtimeNotifier>();
         _loggerMock = new Mock<ILogger<IngestTelemetryReadingCommandHandler>>();
+        _heartbeatTrackerMock = new Mock<IHeartbeatTracker>(); 
 
         _handler = new IngestTelemetryReadingCommandHandler(
             _contextMock.Object,
             _notifierMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            _heartbeatTrackerMock.Object);
     }
 
     [Fact]
