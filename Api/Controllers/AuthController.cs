@@ -18,7 +18,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Register(
-        [FromForm]RegisterCommand command,
+        RegisterCommand command,
         CancellationToken cancellationToken)
     {
         var result = await Sender.Send(command, cancellationToken);   // ← Sender بدل _mediator
@@ -28,7 +28,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login(
-       [FromForm] LoginCommand command,
+        LoginCommand command,
         CancellationToken cancellationToken)
     {
         var result = await Sender.Send(command, cancellationToken);
