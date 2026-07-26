@@ -63,20 +63,29 @@ builder.Services.AddHangfire(config => config
     }));
 
 // CORS Configuration
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("ProductionCorsPolicy", policy =>
+//    {
+//        policy.WithOrigins(
+//                    "https://ashraf676-khaled.github.io",
+//                    "http://localhost:5500",
+//                    "http://127.0.0.1:5500"
+//              )
+//              .AllowAnyHeader()
+//              .AllowAnyMethod();
+//    });
+//});
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ProductionCorsPolicy", policy =>
+    options.AddPolicy("HerdSmartCorsPolicy", policy =>
     {
-        policy.WithOrigins(
-                    "https://ashraf676-khaled.github.io",
-                    "http://localhost:5500",
-                    "http://127.0.0.1:5500"
-              )
+        policy.WithOrigins("https://ashraf676-khaled.github.io")
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials(); // شغال صح لأننا محددين Origin معينة مش AnyOrigin
     });
 });
-
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
