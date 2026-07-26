@@ -135,7 +135,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
-app.UseCors("ProductionCorsPolicy");
+//app.UseCors("ProductionCorsPolicy");
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
