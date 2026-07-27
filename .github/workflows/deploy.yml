@@ -10,25 +10,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: Restore Dependencies
-      run: dotnet restore
+      - name: Restore Dependencies
+        run: dotnet restore ./Api/Api.csproj
 
-    - name: Publish Web API
-      run: dotnet publish --configuration Release --output ./publish
+      - name: Publish Web API
+        run: dotnet publish ./Api/Api.csproj --configuration Release --output ./publish
 
-    - name: Sync FTP Files
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./publish/
-        server-dir: ./
+      # 1) إيقاف التطبيق مؤقتاً لفك قفل IIS والـ Process عن الـ DLLs
+      - name: Take app offline
+        run: |
+          echo "App is being updated, please wait..." > app_offline.htm
+          curl -T app_offline.htm "ftp://${{ secrets.FTP_SERVER }}/app_offline.htm" --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
+          echo "Waiting for IIS to release file locks..."
+          sleep 10
+
+      # 2) رفع الملفات المترجمة الجديدة بالكامل
+      - name: Sync FTP Files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./publish/
+          server-dir: ./
+
+      # 3) إعادة تشغيل التطبيق بحذف ملف app_offline.htm
+      - name: Bring app back online
+        run: |
+          curl -Q "-DELE app_offline.htm" "ftp://${{ secrets.FTP_SERVER }}/" --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
