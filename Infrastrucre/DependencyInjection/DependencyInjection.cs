@@ -30,17 +30,31 @@ namespace Infrastrucre.DependencyInjection
             var connectionString = configuration.GetConnectionString("default");
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
-            // 2. Connection to Redis
+            // 2. Connection to Redis (Upstash Compatible Configuration)
             var redisConnectionString = configuration.GetConnectionString("Redis");
-            services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = redisConnectionString;
-                options.InstanceName = "HerdSmart_";
-            });
-            services.AddSingleton<IConnectionMultiplexer>(sp =>
-             ConnectionMultiplexer.Connect(redisConnectionString)); 
 
-            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            if (!string.IsNullOrWhiteSpace(redisConnectionString))
+            {
+                // تجهيز خيارات الاتصال بـ Redis وضمان تفعيل SSL لـ Upstash
+                var configOptions = ConfigurationOptions.Parse(redisConnectionString);
+                configOptions.Ssl = true; // إجباري لـ Upstash
+                configOptions.AbortOnConnectFail = false; // عدم إيقاف التطبيق لو حدث تعثر لحظي
+                configOptions.ConnectTimeout = 10000; // زيادة وقت المحاولة لـ 10 ثوانٍ
+
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.ConfigurationOptions = configOptions;
+                    options.InstanceName = "HerdSmart_";
+                });
+
+                services.AddSingleton<IConnectionMultiplexer>(sp =>
+                    ConnectionMultiplexer.Connect(configOptions));
+            }
+            else
+            {
+                // Fallback في حال كان الـ Connection String فارغاً
+                services.AddDistributedMemoryCache();
+            }
 
             // 3. JWT Settings & Services
             services.Configure<Jwt>(configuration.GetSection("JWT"));
