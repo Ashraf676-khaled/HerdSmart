@@ -160,6 +160,11 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 });
 
 // 🔴 تشغيل التطبيق (مرة واحدة فقط في النهاية!)
+app.MapGet("/api/deploy-check", () => Results.Ok(new
+{
+    version = "2026-07-27-v3",
+    time = DateTime.UtcNow
+}));
 app.Run();
 
 // Health Check Response Custom Formatting Function
