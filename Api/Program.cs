@@ -28,11 +28,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerdSmartCorsPolicy", policy =>
     {
-        policy.WithOrigins(
-                    "https://ashraf676-khaled.github.io",
-                    "http://localhost:5500",
-                    "http://127.0.0.1:5500"
-              )
+        policy.SetIsOriginAllowed(origin =>
+                    origin.StartsWith("https://ashraf676-khaled.github.io") ||
+                    origin.Contains("localhost") ||
+                    origin.Contains("127.0.0.1"))
               .WithHeaders("Content-Type", "Authorization", "x-requested-with", "accept", "origin")
               .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
               .AllowCredentials();
