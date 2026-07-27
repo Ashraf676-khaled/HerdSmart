@@ -31,5 +31,4 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
-        server-dir: /site1/  # <-- تعديل مهم جداً: تأكد من اسم المجلد المخصص للموقع داخل RunASP (عادة يكون site1 أو wwwroot)
-        dangerous-clean-slate: false
+        server-dir: /wwwroot/  # 👈 ده السطر اللي هيحل الأزمة كلها!
