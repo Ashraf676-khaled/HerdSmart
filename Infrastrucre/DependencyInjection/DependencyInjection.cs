@@ -138,6 +138,7 @@ namespace Infrastrucre.DependencyInjection
             // 7. For MultiTenancy
             services.AddHttpContextAccessor();
             services.AddScoped<ITenantProvider, TenantProvider>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
             return services;
