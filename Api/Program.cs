@@ -28,10 +28,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerdSmartCorsPolicy", policy =>
     {
-        policy.SetIsOriginAllowed(origin => true) // يسمح بجميع المصادر مؤقتاً لحل التعارض وضمان الرد
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.SetIsOriginAllowed(origin => true) // يسمح بـ github.io و localhost وأي أوريجين
+              .AllowAnyHeader()                  // يحل مشكلة content-type نهائياً
+              .AllowAnyMethod()                  // يسمح بـ POST, GET, OPTIONS, PUT...
+              .AllowCredentials();               // يسمح بتمرير الكوكيز والـ Tokens
     });
 });
 
