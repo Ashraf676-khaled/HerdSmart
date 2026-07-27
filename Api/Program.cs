@@ -33,12 +33,11 @@ builder.Services.AddCors(options =>
                     "http://localhost:5500",
                     "http://127.0.0.1:5500"
               )
-              .AllowAnyHeader()
-              .AllowAnyMethod()
+              .WithHeaders("Content-Type", "Authorization", "x-requested-with", "accept", "origin")
+              .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
               .AllowCredentials();
     });
 });
-
 builder.Services.AddHangfireServer();
 
 // Controllers
