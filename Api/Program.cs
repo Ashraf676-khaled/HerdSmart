@@ -119,12 +119,9 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddOpenApi();
 
 // =========================================================================
-// 2. بناء التطبيق وإعداد الـ Middleware Pipeline (مرّة واحدة فقط!)
+// 2. إعداد الـ Middleware Pipeline (بالترتيب الصحيح)
 // =========================================================================
 var app = builder.Build();
-
-// 🔴 أهم سطر: تفعيل الـ CORS أول شيء في الـ Pipeline ليرد على الـ Preflight
-app.UseCors("HerdSmartCorsPolicy");
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
@@ -140,11 +137,18 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// 1. تحديد الـ Routing أولاً
 app.UseRouting();
+
+// 2. تطبيق الـ CORS فوراً بعد الـ Routing وقبل الأمان
+app.UseCors("HerdSmartCorsPolicy");
+
+// 3. تطبيق باقي الـ Middlewares
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { new HangfireAuthorizationFilter() }
@@ -152,6 +156,7 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 app.RegisterRecurringJobs();
 
+// Endpoints Mapping
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.MapHealthChecks("/health", new HealthCheckOptions
@@ -159,12 +164,12 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     ResponseWriter = WriteHealthCheckResponse
 });
 
-// 🔴 تشغيل التطبيق (مرة واحدة فقط في النهاية!)
 app.MapGet("/api/deploy-check", () => Results.Ok(new
 {
-    version = "2026-07-27-v3",
+    version = "2026-07-27-v4",
     time = DateTime.UtcNow
 }));
+
 app.Run();
 
 // Health Check Response Custom Formatting Function
