@@ -42,8 +42,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-builder.Services.AddDistributedMemoryCache();
-
 // Serilog Logging
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

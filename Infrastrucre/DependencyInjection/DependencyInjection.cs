@@ -30,32 +30,33 @@ namespace Infrastrucre.DependencyInjection
             var connectionString = configuration.GetConnectionString("default");
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
-            // 1. تسجيل خدمة IRefreshTokenService
-            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-
             // 2. إعداد الاتصال بـ Upstash Redis
             var redisConnectionString = configuration.GetConnectionString("Redis");
 
             if (!string.IsNullOrWhiteSpace(redisConnectionString))
             {
-                // تحليل نص الاتصال وتأكيد خيارات التشفير الخاصة بـ Upstash
                 var options = ConfigurationOptions.Parse(redisConnectionString);
                 options.Ssl = true; // إجباري لـ Upstash
                 options.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
-                options.AbortOnConnectFail = false; // لمنع الاستثناء عند التحميل المبدئي
-                options.ConnectTimeout = 10000; // زيادة مهلة الاتصال لـ 10 ثوانٍ
-                options.SyncTimeout = 10000;
+                options.AbortOnConnectFail = false;
+                options.ConnectTimeout = 15000;
+                options.SyncTimeout = 15000;
+                options.KeepAlive = 30;
 
-                // تسجيل Distributed Cache
+                // إنشاء وتداول اتصال واحد ثابت
+                var multiplexer = ConnectionMultiplexer.Connect(options);
+                services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+
+                // ربط الـ Distributed Cache بنفس الـ Multiplexer
                 services.AddStackExchangeRedisCache(opt =>
                 {
-                    opt.ConfigurationOptions = options;
+                    opt.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(multiplexer);
                     opt.InstanceName = "HerdSmart_";
                 });
-
-                // تسجيل IConnectionMultiplexer
-                services.AddSingleton<IConnectionMultiplexer>(sp =>
-                    ConnectionMultiplexer.Connect(options));
+            }
+            else
+            {
+                services.AddDistributedMemoryCache();
             }
 
             // 3. JWT Settings & Services
@@ -96,7 +97,7 @@ namespace Infrastrucre.DependencyInjection
                 };
 
                 options.SaveToken = true;
-                options.RequireHttpsMetadata = false; // للتطوير فقط، في الـ Production بنخليها true
+                options.RequireHttpsMetadata = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -109,7 +110,8 @@ namespace Infrastrucre.DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
-            // HealthCheck
+
+            // 6. HealthChecks
             var healthChecksBuilder = services.AddHealthChecks()
                 .AddSqlServer(
                     configuration.GetConnectionString("default")!,
@@ -120,10 +122,10 @@ namespace Infrastrucre.DependencyInjection
                     options.MinimumAvailableServers = 1;
                 }, name: "hangfire", tags: ["ready"]);
 
-            var redisConnection = configuration.GetConnectionString("Redis");
-            if (!string.IsNullOrEmpty(redisConnection))
+            if (!string.IsNullOrEmpty(redisConnectionString))
             {
-                healthChecksBuilder.AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+                // استخدام الـ Singleton Connection المظبوط في الـ HealthCheck
+                healthChecksBuilder.AddRedis(sp => sp.GetRequiredService<IConnectionMultiplexer>(), name: "redis", tags: ["ready"]);
             }
 
             services.AddHealthChecks()
@@ -134,10 +136,8 @@ namespace Infrastrucre.DependencyInjection
               .AddCheck<HealthLogDataHealthCheck>("health-log-data", tags: ["business"])
               .AddCheck<MilkProductionHealthCheck>("milk-production-data", tags: ["business"])
               .AddCheck<VaccinationScheduleHealthCheck>("vaccination-schedule-data", tags: ["business"]);
-            
 
-
-            // 7. For MultiTenancy
+            // 7. For MultiTenancy & Services
             services.AddHttpContextAccessor();
             services.AddScoped<ITenantProvider, TenantProvider>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
