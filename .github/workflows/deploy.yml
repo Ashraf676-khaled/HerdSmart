@@ -16,7 +16,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x' # عدل الإصدار حسب مشروعك (مثلاً 8.0 أو 7.0)
+        dotnet-version: '8.0.x'
 
     - name: Restore Dependencies
       run: dotnet restore
@@ -31,4 +31,5 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
-        server-dir: / # الـ Root Directory للـ FTP
+        server-dir: /site1/  # <-- تعديل مهم جداً: تأكد من اسم المجلد المخصص للموقع داخل RunASP (عادة يكون site1 أو wwwroot)
+        dangerous-clean-slate: false
