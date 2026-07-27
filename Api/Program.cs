@@ -13,11 +13,31 @@ using Serilog;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using Hangfire;
+using Hangfire.SqlServer;
+using Serilog;
 using Web.Hubs;
 using Web.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. تسجيل خدمة الـ CORS في البداية
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("HerdSmartCorsPolicy", policy =>
+    {
+        policy.WithOrigins(
+                    "https://ashraf676-khaled.github.io",
+                    "http://localhost:5500",
+                    "http://127.0.0.1:5500"
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddHangfireServer();
 
@@ -62,30 +82,22 @@ builder.Services.AddHangfire(config => config
         DisableGlobalLocks = true
     }));
 
-// CORS Configuration
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("ProductionCorsPolicy", policy =>
-//    {
-//        policy.WithOrigins(
-//                    "https://ashraf676-khaled.github.io",
-//                    "http://localhost:5500",
-//                    "http://127.0.0.1:5500"
-//              )
-//              .AllowAnyHeader()
-//              .AllowAnyMethod();
-//    });
-//});
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("HerdSmartCorsPolicy", policy =>
-    {
-        policy.WithOrigins("https://ashraf676-khaled.github.io")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials(); // شغال صح لأننا محددين Origin معينة مش AnyOrigin
-    });
-});
+// =========================================================================
+// 2. بناء التطبيق وإعادة إعداد الـ Middleware Pipeline
+// =========================================================================
+var app = builder.Build();
+
+// 🔴 أهم سطر: تفعيل الـ CORS أول شيء في الـ Pipeline ليرد على طلب الـ Preflight
+app.UseCors("HerdSmartCorsPolicy");
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
@@ -128,7 +140,7 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddOpenApi();
 
-var app = builder.Build();
+ app = builder.Build();
 
 // 🔒 Scalar & OpenAPI يشتغلا فقط في بيئة الـ Development
 if (app.Environment.IsDevelopment())
