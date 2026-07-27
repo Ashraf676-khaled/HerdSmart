@@ -13,17 +13,17 @@ using Serilog;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
-using Hangfire;
-using Hangfire.SqlServer;
-using Serilog;
 using Web.Hubs;
 using Web.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. تسجيل خدمة الـ CORS في البداية
+// =========================================================================
+// 1. تسجيل الخدمات (Services Registration)
+// =========================================================================
+
+// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerdSmartCorsPolicy", policy =>
@@ -37,19 +37,17 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
-builder.Services.AddHangfireServer();
 
-// Controllers
+// Controllers & JSON Serializer
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters
-            .Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
 builder.Services.AddDistributedMemoryCache();
 
-// Serilog
+// Serilog Logging
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.File("logs/herdsmart-.log", rollingInterval: RollingInterval.Day)
@@ -57,7 +55,7 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Dependency Injection
+// Application & Infrastructure Services
 builder.Services.AddApplication();
 builder.Services.AddInfrastrucre(builder.Configuration);
 builder.Services.AddScoped<IHeartbeatTracker, CacheHeartbeatTracker>();
@@ -66,7 +64,8 @@ builder.Services.AddScoped<IHeartbeatTracker, CacheHeartbeatTracker>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 
-// Hangfire
+// Hangfire Background Jobs
+builder.Services.AddHangfireServer();
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
@@ -80,22 +79,6 @@ builder.Services.AddHangfire(config => config
         DisableGlobalLocks = true
     }));
 
-// =========================================================================
-// 2. بناء التطبيق وإعادة إعداد الـ Middleware Pipeline
-// =========================================================================
-var app = builder.Build();
-
-// 🔴 أهم سطر: تفعيل الـ CORS أول شيء في الـ Pipeline ليرد على طلب الـ Preflight
-app.UseCors("HerdSmartCorsPolicy");
-
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
@@ -138,9 +121,17 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddOpenApi();
 
- app = builder.Build();
+// =========================================================================
+// 2. بناء التطبيق وإعداد الـ Middleware Pipeline (مرّة واحدة فقط!)
+// =========================================================================
+var app = builder.Build();
 
-// 🔒 Scalar & OpenAPI يشتغلا فقط في بيئة الـ Development
+// 🔴 أهم سطر: تفعيل الـ CORS أول شيء في الـ Pipeline ليرد على الـ Preflight
+app.UseCors("HerdSmartCorsPolicy");
+
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -152,10 +143,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseMiddleware<ExceptionMiddleware>();
-app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseRouting();
-app.UseCors("ProductionCorsPolicy");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -169,12 +157,15 @@ app.RegisterRecurringJobs();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
-
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = WriteHealthCheckResponse
 });
 
+// 🔴 تشغيل التطبيق (مرة واحدة فقط في النهاية!)
+app.Run();
+
+// Health Check Response Custom Formatting Function
 static async Task WriteHealthCheckResponse(HttpContext context, HealthReport report)
 {
     context.Response.ContentType = "application/json";
@@ -196,5 +187,3 @@ static async Task WriteHealthCheckResponse(HttpContext context, HealthReport rep
     await context.Response.WriteAsync(
         JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true }));
 }
-
-app.Run();
