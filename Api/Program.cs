@@ -28,12 +28,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerdSmartCorsPolicy", policy =>
     {
-        policy.SetIsOriginAllowed(origin =>
-                    origin.StartsWith("https://ashraf676-khaled.github.io") ||
-                    origin.Contains("localhost") ||
-                    origin.Contains("127.0.0.1"))
-              .WithHeaders("Content-Type", "Authorization", "x-requested-with", "accept", "origin")
-              .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        policy.SetIsOriginAllowed(origin => true) // يسمح بجميع المصادر مؤقتاً لحل التعارض وضمان الرد
+              .AllowAnyHeader()
+              .AllowAnyMethod()
               .AllowCredentials();
     });
 });
