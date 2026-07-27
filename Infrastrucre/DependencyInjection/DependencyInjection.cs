@@ -38,7 +38,7 @@ namespace Infrastrucre.DependencyInjection
                 options.InstanceName = "HerdSmart_";
             });
             services.AddSingleton<IConnectionMultiplexer>(sp =>
-             ConnectionMultiplexer.Connect("localhost:6379")); 
+             ConnectionMultiplexer.Connect(redisConnectionString)); 
 
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
