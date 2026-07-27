@@ -30,30 +30,32 @@ namespace Infrastrucre.DependencyInjection
             var connectionString = configuration.GetConnectionString("default");
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
-            // 2. Connection to Redis (Upstash Compatible Configuration)
+            // 1. تسجيل خدمة IRefreshTokenService
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+            // 2. إعداد الاتصال بـ Upstash Redis
             var redisConnectionString = configuration.GetConnectionString("Redis");
 
             if (!string.IsNullOrWhiteSpace(redisConnectionString))
             {
-                // تجهيز خيارات الاتصال بـ Redis وضمان تفعيل SSL لـ Upstash
-                var configOptions = ConfigurationOptions.Parse(redisConnectionString);
-                configOptions.Ssl = true; // إجباري لـ Upstash
-                configOptions.AbortOnConnectFail = false; // عدم إيقاف التطبيق لو حدث تعثر لحظي
-                configOptions.ConnectTimeout = 10000; // زيادة وقت المحاولة لـ 10 ثوانٍ
+                // تحليل نص الاتصال وتأكيد خيارات التشفير الخاصة بـ Upstash
+                var options = ConfigurationOptions.Parse(redisConnectionString);
+                options.Ssl = true; // إجباري لـ Upstash
+                options.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+                options.AbortOnConnectFail = false; // لمنع الاستثناء عند التحميل المبدئي
+                options.ConnectTimeout = 10000; // زيادة مهلة الاتصال لـ 10 ثوانٍ
+                options.SyncTimeout = 10000;
 
-                services.AddStackExchangeRedisCache(options =>
+                // تسجيل Distributed Cache
+                services.AddStackExchangeRedisCache(opt =>
                 {
-                    options.ConfigurationOptions = configOptions;
-                    options.InstanceName = "HerdSmart_";
+                    opt.ConfigurationOptions = options;
+                    opt.InstanceName = "HerdSmart_";
                 });
 
+                // تسجيل IConnectionMultiplexer
                 services.AddSingleton<IConnectionMultiplexer>(sp =>
-                    ConnectionMultiplexer.Connect(configOptions));
-            }
-            else
-            {
-                // Fallback في حال كان الـ Connection String فارغاً
-                services.AddDistributedMemoryCache();
+                    ConnectionMultiplexer.Connect(options));
             }
 
             // 3. JWT Settings & Services
