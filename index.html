@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=yes" />
+<title>هيردسمارت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/jwt-decode.min.js"></script>
+
+<style>
+:root{
+  --bg:#F3EEDE;--card:#FFFDF5;--ink:#202A1E;--soft:#5A6553;--green:#3C6B41;--deep:#1F3A26;
+  --gold:#C79A45;--rust:#A85234;--line:#E1D6B4;--radius:14px;--shadow:0 10px 30px -16px rgba(31,58,38,.28)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+.num{font-family:'JetBrains Mono',monospace}
+button,select{font-family:inherit;cursor:pointer}
+input{font-family:inherit;cursor:text}
+a{text-decoration:none;color:inherit}
+.hidden{display:none!important}
+
+.topbar{
+  position:sticky;top:0;z-index:30;background:rgba(255,253,245,.92);backdrop-filter:blur(8px);
+  min-height:64px;padding:10px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap
+}
+.brand{display:flex;align-items:center;gap:10px;font-size:1.15rem;font-weight:900;color:var(--deep)}
+.brand .mark{
+  width:36px;height:36px;border-radius:11px;background:linear-gradient(155deg,var(--green),var(--deep));
+  color:#fff;display:grid;place-items:center;box-shadow:0 10px 20px -10px rgba(31,58,38,.5);perspective:600px
+}
+.brand .mark span{display:inline-block;animation:spinCow 7s ease-in-out infinite}
+@keyframes spinCow{0%,100%{transform:rotateY(0) rotateX(0)}50%{transform:rotateY(180deg) rotateX(10deg)}}
+@media (prefers-reduced-motion:reduce){.brand .mark span{animation:none}}
+
+.top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status-badge,.user-chip,.role-switch{
+  background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:700
+}
+.status-badge{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--soft)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#c9be9c}
+.status-dot.on{background:var(--green);animation:pulseGreen 2s infinite}
+@keyframes pulseGreen{0%{box-shadow:0 0 0 0 rgba(60,107,65,.45)}70%{box-shadow:0 0 0 8px rgba(60,107,65,0)}100%{box-shadow:0 0 0 0 rgba(60,107,65,0)}}
+.user-chip{display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--deep)}
+.role-tag{font-size:.62rem;background:var(--gold);color:var(--deep);padding:2px 8px;border-radius:999px}
+.role-switch{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--soft)}
+.role-switch select{border:none;background:transparent;color:var(--deep);font-weight:700}
+
+.btn{
+  border:1.5px solid transparent;border-radius:10px;padding:7px 14px;font-size:.76rem;font-weight:700;
+  transition:.2s transform,.2s background,.2s box-shadow,.2s color
+}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+.btn-solid{background:var(--deep);color:#fff}
+.btn-solid:hover:not(:disabled){background:var(--green);box-shadow:0 8px 16px -10px rgba(31,58,38,.45)}
+.btn-outline{background:transparent;border-color:var(--deep);color:var(--deep)}
+.btn-outline:hover:not(:disabled){background:var(--deep);color:#fff}
+.btn-small{padding:5px 10px;font-size:.68rem}
+.btn.locked{background:#e9e3cf;border-color:#e9e3cf;color:#8b8367;opacity:1}
+.btn.locked:hover{transform:none!important;background:#e9e3cf!important;color:#8b8367!important}
+
+.hamburger{display:none;background:none;border:none;color:var(--deep);font-size:1.35rem;padding:2px 6px}
+
+.app-body{display:flex;height:calc(100vh - 64px)}
+.sidebar{
+  width:228px;flex:none;background:linear-gradient(180deg,#1F3A26,#274530);color:#efe9d6;padding:14px 10px;
+  display:flex;flex-direction:column;gap:4px;overflow-y:auto;transition:transform .28s ease
+}
+.nav-item{
+  width:100%;border:none;background:transparent;color:#ddd4b4;text-align:right;font-size:.86rem;font-weight:700;
+  padding:11px 14px;border-radius:10px;display:flex;align-items:center;gap:10px;transition:.2s
+}
+.nav-item:hover{background:#2b4b33;color:#fff;transform:translateX(-3px)}
+.nav-item.active{background:var(--gold);color:var(--deep)}
+.sidebar-foot{margin-top:auto;padding:10px 14px;font-size:.65rem;color:#97a38c}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40}
+.sidebar-overlay.open{display:block}
+
+.content{flex:1;overflow-y:auto;padding:20px 24px;overflow-x:hidden}
+.view{animation:fadeIn .28s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.view-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.view-head h1{font-size:1.22rem;font-weight:900;color:var(--deep)}
+.view-head p{font-size:.8rem;color:var(--soft)}
+
+.card-box{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px;
+  box-shadow:var(--shadow);overflow-x:auto;transform-style:preserve-3d;transition:.25s transform,.25s box-shadow
+}
+.card-box:hover{transform:translateY(-2px) rotateX(1deg);box-shadow:0 15px 40px -18px rgba(31,58,38,.3)}
+.card-box h4{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--deep);font-size:.95rem;margin-bottom:12px}
+
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:500px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line)}
+th{text-align:right;color:var(--soft);font-size:.7rem;font-weight:800;white-space:nowrap}
+tbody tr:hover{background:#faf6e8}
+tbody tr:last-child td{border-bottom:none}
+
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.75rem;font-weight:700;color:var(--soft);margin-bottom:4px}
+.field input,.field select{
+  width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink);
+  font-size:.85rem;transition:.2s border-color,.2s box-shadow
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(60,107,65,.12)}
+.field input:disabled,.field select:disabled{background:#f1f1f1;opacity:.65}
+.field-error{display:block;margin-top:4px;font-size:.7rem;color:var(--rust)}
+
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.modal-actions .btn{flex:1;text-align:center;min-width:90px}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.65rem;font-weight:800;white-space:nowrap}
+.badge.ok{background:#deead9;color:var(--deep)}
+.badge.pending{background:#f1e3be;color:#8a6417}
+.badge.active{background:#f3dad1;color:var(--rust)}
+.badge.sold{background:#e7e2cc;color:#6b6547}
+.badge.dead{background:#ead6d6;color:#8a3a3a}
+
+.tip-wrap{position:relative;display:inline-flex}
+.tip-bubble{
+  position:absolute;bottom:calc(100% + 7px);right:50%;transform:translateX(50%) translateY(4px);
+  background:var(--deep);color:#fff;font-size:.62rem;font-weight:700;padding:6px 8px;border-radius:8px;
+  opacity:0;pointer-events:none;white-space:nowrap;transition:.18s;z-index:5
+}
+.tip-bubble:after{
+  content:'';position:absolute;top:100%;right:50%;transform:translateX(50%);border:4px solid transparent;border-top-color:var(--deep)
+}
+.tip-wrap:hover .tip-bubble,.tip-wrap:focus-within .tip-bubble{opacity:1;transform:translateX(50%) translateY(0)}
+
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);
+  transition:.25s;transform-style:preserve-3d
+}
+.stat-card:hover{transform:perspective(700px) rotateX(4deg) rotateY(-4deg) translateY(-4px)}
+.stat-card .label{font-size:.72rem;color:var(--soft);font-weight:800;margin-bottom:4px}
+.stat-card .value{font-size:1.55rem;color:var(--deep);font-weight:900}
+.stat-card .value.rust{color:var(--rust)}
+.stat-card .sub{font-size:.66rem;color:var(--soft);margin-top:3px}
+
+.panel-grid,.gauge-grid{display:grid;gap:16px}
+.panel-grid{grid-template-columns:1fr 1fr}
+.gauge-grid{grid-template-columns:1fr 1fr;gap:12px}
+.gauge{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.g-label{font-size:.7rem;color:var(--soft);font-weight:800;margin-bottom:3px}
+.g-value{font-size:1.3rem;font-weight:900}
+.g-bar{height:5px;background:var(--line);border-radius:4px;margin-top:6px;overflow:hidden}
+.g-fill{height:100%;border-radius:4px;transition:.5s width,.3s background}
+
+.producer-row,.alert-item{display:flex;gap:10px;border-bottom:1px solid var(--line);padding:8px 0;align-items:flex-start;flex-wrap:wrap}
+.producer-row:last-child,.alert-item:last-child{border-bottom:none}
+.producer-row{justify-content:space-between;align-items:center}
+.producer-row .liters{font-weight:800;color:var(--rust)}
+.dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
+.dot.red{background:var(--rust);animation:pulseRed 1.8s infinite}
+.dot.gray{background:#c9be9c}
+@keyframes pulseRed{0%{box-shadow:0 0 0 0 rgba(168,82,52,.55)}70%{box-shadow:0 0 0 8px rgba(168,82,52,0)}100%{box-shadow:0 0 0 0 rgba(168,82,52,0)}}
+.meta{font-size:.7rem;color:var(--soft);margin-top:3px}
+.body{flex:1;min-width:160px}
+.live-badge{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;color:var(--rust)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--rust);animation:pulseRed 1.8s infinite}
+
+.feature-hero{
+  background:linear-gradient(135deg,var(--deep),var(--green) 120%);border-radius:16px;padding:20px;color:#f6efdc;position:relative;
+  overflow:hidden;box-shadow:0 20px 40px -25px rgba(31,58,38,.6)
+}
+.feature-hero:before{
+  content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(199,154,69,.23),transparent 55%)
+}
+.feature-hero > *{position:relative}
+.feature-hero h2{font-size:1.1rem;font-weight:900;margin-bottom:4px}
+.feature-hero p{font-size:.8rem;opacity:.9;max-width:520px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.feature-chip{
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;
+  transition:.22s;background-clip:padding-box
+}
+.feature-chip:hover{transform:perspective(700px) rotateX(4deg) rotateY(-4deg) translateY(-3px);background:rgba(255,255,255,.14)}
+.fc-ic{font-size:1rem;margin-bottom:4px}
+.fc-title{font-size:.72rem;font-weight:800;margin-bottom:2px}
+.fc-desc{font-size:.6rem;opacity:.8;line-height:1.35}
+
+.loading-box,.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 14px;color:var(--soft)
+}
+.spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--green);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.es-ic{font-size:1.5rem;margin-bottom:6px}
+.es-title{font-size:.86rem;font-weight:800;color:var(--deep);margin-bottom:3px}
+.es-sub{font-size:.72rem}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,26,17,.5);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:16px
+}
+.modal{
+  width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:var(--card);border:1px solid var(--line);
+  border-radius:18px;padding:20px;position:relative;box-shadow:0 30px 80px -30px rgba(0,0,0,.35);animation:modalIn .25s ease
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(14px)}to{opacity:1;transform:none}}
+.modal-close{position:absolute;top:10px;left:10px;background:none;border:none;font-size:1.1rem;color:var(--soft)}
+.auth-tabs{display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:14px}
+.auth-tab{flex:1;border:none;background:transparent;border-radius:8px;padding:7px;font-size:.8rem;font-weight:800;color:var(--soft)}
+.auth-tab.active{background:var(--deep);color:#fff}
+.pw-strength-bar{height:4px;background:var(--line);border-radius:4px;margin-top:6px;overflow:hidden}
+.pw-strength-fill{height:100%;border-radius:4px;transition:.25s}
+.pw-checklist{list-style:none;display:grid;gap:4px;margin-top:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.pw-checklist li{display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;color:var(--soft)}
+.pw-checklist li.ok{color:var(--deep)}
+.pw-ic{
+  width:14px;height:14px;border-radius:50%;display:grid;place-items:center;background:#e1d6b4;color:#fff;font-size:.55rem;flex:none
+}
+.pw-checklist li.ok .pw-ic{background:var(--green)}
+
+@media(max-width:1024px){.panel-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.form-grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){
+  .hamburger{display:block}
+  .topbar{min-height:56px;padding:8px 12px}
+  .app-body{height:calc(100vh - 56px)}
+  .sidebar{
+    position:fixed;top:56px;right:0;bottom:0;width:min(80vw,280px);transform:translateX(100%);z-index:50;
+    box-shadow:-10px 0 30px -10px rgba(0,0,0,.35)
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:12px}
+  .form-grid-2,.form-grid-3,.gauge-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:1fr 1fr;gap:8px}
+  .top-right{width:100%;justify-content:space-between}
+  .role-switch{order:3;width:100%;justify-content:center}
+  .view-head{align-items:flex-start;flex-direction:column}
+  .view-head .btn,.view-head .tip-wrap{width:100%}
+  .modal-actions{flex-direction:column}
+  .modal-actions .btn{width:100%}
+  .card-box{padding:12px}
+  table{min-width:430px;font-size:.74rem}
+}
+@media(max-width:480px){
+  .topbar{min-height:auto}
+  .app-body{height:calc(100vh - 50px)}
+  .brand{font-size:.95rem;width:100%;justify-content:space-between}
+  .brand .mark{width:30px;height:30px}
+  .top-right .status-badge{display:none}
+  .user-chip{display:none}
+  .content{padding:8px}
+  .stat-row{grid-template-columns:1fr}
+  .feature-grid{grid-template-columns:1fr 1fr}
+  .feature-chip .fc-desc{display:none}
+  table{min-width:340px;font-size:.68rem}
+  th,td{padding:5px 4px}
+  .modal{padding:14px;border-radius:14px}
+  input,select,button{min-height:40px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-wrap"></div>
+
+<script type="text/babel">
+const {useState,useEffect,useMemo,useCallback,createContext,useContext}=React;
+
+// ===== CONFIG =====
+const API_BASE='https://herdsmart.runasp.net/api';
+const EP={
+  login:'/Auth/login',
+  register:'/Auth/register',
+  refresh:'/Auth/refresh-token',
+  vaccines:'/vaccines',
+  vaccinations:'/vaccinations',
+  vaccAdminister:id=>`/vaccinations/${id}/administer`,
+  healthLogs:'/health-logs',
+  cattle:'/Cattle',
+  cattleOne:id=>`/Cattle/${id}`,
+  cattleStatus:id=>`/Cattle/${id}/status`,
+  users:'/users',
+  milk:'/milk',
+  milkTop:'/milk/top-producers',
+  milkSummary:'/milk/summary'
+};
+
+// ===== RBAC =====
+const ROLES_DEF={
+  Owner:['create_cattle','edit_cattle','delete_cattle','view','manageStaff','schedule_vaccination','reschedule_vaccination','cancel_vaccination','resolve_alerts'],
+  Vet:['create_cattle','edit_cattle','view','create_vaccine','schedule_vaccination','reschedule_vaccination','cancel_vaccination','administer','create_health','edit_health','resolve_alerts'],
+  Worker:['view'],
+  Guest:['view']
+};
+const roleNames={Owner:'مالك المزرعة',Vet:'بيطري',Worker:'عامل',Guest:'ضيف'};
+const ROLE_INT_MAP={0:'Owner',1:'Vet',2:'Worker'};
+const ROLE_STRING_TO_INT={Owner:0,Vet:1,Worker:2};
+
+const STAFF_MANAGER_ROLE='Owner';
+const VACCINE_CREATOR_ROLE='Vet';
+const VACCINATION_ADMINISTER_ROLE='Vet';
+const HEALTH_LOG_EDITOR_ROLE='Vet';
+
+const GENDER_MAP={0:{label:'ذكر',icon:'♂️'},1:{label:'أنثى',icon:'♀️'}};
+const CATTLE_STATUS_MAP={
+  0:{label:'نشطة',cls:'ok'},
+  1:{label:'مريضة',cls:'active'},
+  2:{label:'حامل',cls:'pending'},
+  3:{label:'مباعة',cls:'sold'},
+  4:{label:'نافقة',cls:'dead'}
+};
+
+// ===== MOCK =====
+const MOCK={
+  vaccines:[
+    {id:'v1',name:'الحمى القلاعية',targetAgeInMonths:3,dosage:2,intervalInDays:null},
+    {id:'v2',name:'البروسيلا',targetAgeInMonths:6,dosage:1.5,intervalInDays:30},
+    {id:'v3',name:'الجمرة الخبيثة',targetAgeInMonths:12,dosage:3,intervalInDays:null}
+  ],
+  vaccinations:[
+    {id:'vc1',cattleTagNumber:'A102',vaccineName:'الحمى القلاعية',scheduledDate:'2026-07-10T00:00:00',administeredDate:null},
+    {id:'vc2',cattleTagNumber:'A245',vaccineName:'البروسيلا',scheduledDate:'2026-08-01T00:00:00',administeredDate:null},
+    {id:'vc3',cattleTagNumber:'A088',vaccineName:'الجمرة الخبيثة',scheduledDate:'2026-06-15T00:00:00',administeredDate:'2026-06-15T00:00:00'}
+  ],
+  healthLogs:[
+    {id:'h1',cattleTagNumber:'A088',diagnosis:'التهاب الضرع',treatmentPlan:'مضاد حيوي موضعي 5 أيام',isContagious:false},
+    {id:'h2',cattleTagNumber:'A245',diagnosis:'عرج خفيف',treatmentPlan:'راحة وتقليم الأظلاف',isContagious:false}
+  ],
+  cattle:[
+    {id:'c1',tagNumber:'A102',breed:'هولشتاين',gender:0,birthDate:'2023-02-11T00:00:00',status:0,fatherTagNumber:null,motherTagNumber:'A050'},
+    {id:'c2',tagNumber:'A245',breed:'بلدي',gender:0,birthDate:'2022-08-03T00:00:00',status:0,fatherTagNumber:'A010',motherTagNumber:null},
+    {id:'c3',tagNumber:'A310',breed:'جيرسي',gender:0,birthDate:'2023-11-20T00:00:00',status:0,fatherTagNumber:null,motherTagNumber:null},
+    {id:'c4',tagNumber:'A088',breed:'هولشتاين',gender:1,birthDate:'2021-05-14T00:00:00',status:1,fatherTagNumber:null,motherTagNumber:null}
+  ],
+  staff:[
+    {id:'s1',fullName:'د. كريم عادل',email:'kareem@farm.com',role:'Vet'},
+    {id:'s2',fullName:'أميرة فوزي',email:'amira@farm.com',role:'Worker'},
+    {id:'s3',fullName:'محمود الجندي',email:'mahmoud@farm.com',role:'Worker'}
+  ],
+  weeklyMilk:[1620,1710,1690,1780,1750,1810,1840],
+  topProducers:[
+    {tagNumber:'A102',totalLiters:27.4},
+    {tagNumber:'A245',totalLiters:25.1},
+    {tagNumber:'A310',totalLiters:24.6}
+  ],
+  alerts:[
+    {id:'a1',text:'ارتفاع درجة الحرارة — البقرة #A102 (8.7/10)',time:'الآن',active:true},
+    {id:'a2',text:'مستوى حركة منخفض — البقرة #A245 (2.1/10)',time:'منذ 5 دقائق',active:true}
+  ]
+};
+
+// ===== HELPERS =====
+const safeNum=v=>isNaN(Number(v))?0:Number(v);
+const formatDate=d=>d?new Date(d).toLocaleDateString('ar-EG'):'—';
+const isEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const getRoleDisplay=r=>typeof r==='number'?roleNames[ROLE_INT_MAP[r]]||r:roleNames[r]||r;
+const ageLabel=bd=>{
+  if(!bd)return'—';
+  const m=Math.max(0,Math.floor((Date.now()-new Date(bd))/(1000*60*60*24*30.44)));
+  return m<12?`${m} شهر`:`${Math.floor(m/12)} سنة و ${m%12} شهر`;
+};
+function showToast(msg,isError=false){
+  const wrap=document.getElementById('toast-wrap');
+  const el=document.createElement('div');
+  el.className='toast'+(isError?' error':'');
+  Object.assign(el.style,{
+    background:isError?'var(--rust)':'var(--deep)',color:'#fff',padding:'10px 16px',
+    borderRadius:'10px',fontSize:'.8rem',fontWeight:'700',boxShadow:'0 8px 20px -8px rgba(0,0,0,.35)',
+    textAlign:'center',marginTop:'6px'
+  });
+  el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+function extractValidationErrors(err){
+  const d=err?.response?.data; if(!d)return[];
+  let msgs=[];
+  if(d.errors&&typeof d.errors==='object')Object.values(d.errors).forEach(a=>Array.isArray(a)&&msgs.push(...a));
+  else if(Array.isArray(d.errors))msgs.push(...d.errors);
+  else if(d.message)msgs.push(d.message);
+  else if(d.title)msgs.push(d.title);
+  else if(typeof d==='string')msgs.push(d);
+  return msgs;
+}
+const ERROR_TRANSLATIONS=[
+  [/invalid\s*(email|username)?\s*(or|\/)\s*password|incorrect/i,'البريد الإلكتروني أو كلمة المرور غير صحيحة'],
+  [/user\s*not\s*found|account\s*not\s*found/i,'لا يوجد حساب مسجّل بهذا البريد الإلكتروني'],
+  [/already\s*(exists|registered|taken|in\s*use)/i,'هذا البريد الإلكتروني مستخدم بالفعل'],
+  [/unauthorized/i,'بيانات الدخول غير صحيحة أو انتهت صلاحية الجلسة'],
+  [/forbidden|not\s*allowed|permission\s*denied/i,'ليس لديك صلاحية لتنفيذ هذا الإجراء'],
+  [/not\s*found/i,'العنصر المطلوب غير موجود'],
+  [/already\s*administered/i,'تم إعطاء هذا اللقاح بالفعل'],
+  [/conflict|duplicate/i,'هذه البيانات مسجّلة بالفعل'],
+  [/network\s*error/i,'تعذر الاتصال بالخادم، تحقق من اتصال الإنترنت'],
+  [/is\s*required|cannot\s*be\s*empty|field\s*is\s*required/i,'هناك حقل مطلوب لم يتم إدخاله'],
+  [/invalid\s*email/i,'صيغة البريد الإلكتروني غير صحيحة'],
+  [/password.*(short|weak|length|characters)/i,'كلمة المرور لا تحقق الشروط المطلوبة'],
+  [/future\s*date|cannot\s*be\s*in\s*the\s*future/i,'التاريخ لا يمكن أن يكون في المستقبل'],
+  [/token\s*expired|expired\s*token/i,'انتهت صلاحية الجلسة، يرجى تسجيل الدخول من جديد'],
+  [/server\s*error|internal\s*server/i,'حدث خطأ في الخادم، حاول مرة أخرى لاحقاً'],
+  [/rate\s*limit|too\s*many\s*requests/i,'عدد كبير من المحاولات، حاول مرة أخرى بعد قليل']
+];
+const translateErrorMessage=raw=>{
+  if(!raw||typeof raw!=='string')return null;
+  for(const [re,msg] of ERROR_TRANSLATIONS) if(re.test(raw)) return msg;
+  return /[\u0600-\u06FF]/.test(raw)?raw:null;
+};
+const statusFallbackMessage=s=>({
+  400:'البيانات المُدخلة غير صحيحة، يرجى مراجعتها',
+  401:'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+  403:'ليس لديك صلاحية لتنفيذ هذا الإجراء',
+  404:'العنصر المطلوب غير موجود',
+  409:'هذه البيانات مسجّلة بالفعل',
+  422:'تحقق من صحة البيانات المدخلة',
+  429:'عدد كبير من المحاولات، حاول مرة أخرى بعد قليل',
+  500:'حدث خطأ في الخادم، حاول مرة أخرى لاحقاً'
+}[s]||null);
+function errMsg(err,fallback='حدث خطأ غير متوقع، حاول مرة أخرى'){
+  if(!err||!err.response)return'تعذر الاتصال بالخادم، تحقق من اتصال الإنترنت';
+  const status=err.response.status;
+  const raw=extractValidationErrors(err);
+  const translated=[...new Set(raw.map(translateErrorMessage).filter(Boolean))];
+  return translated.length?translated.join(' | '):(statusFallbackMessage(status)||fallback);
+}
+
+const getToken=()=>localStorage.getItem('hs_token');
+const isLoggedIn=()=>!!getToken();
+const clearSession=()=>['hs_token','hs_refreshToken','hs_role','hs_name'].forEach(k=>localStorage.removeItem(k));
+function logout(){clearSession();window.location.reload()}
+
+function decodeToken(token){
+  try{
+    const d=jwtDecode(token);
+    const claims=[
+      'role','roles',
+      'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+      'http://schemas.microsoft.com/ws/2008/06/identity/claims/roles',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/roles'
+    ];
+    let roles=[];
+    for(const c of claims){
+      if(d[c]!==undefined&&d[c]!==null){
+        const v=d[c];
+        roles=Array.isArray(v)?v:[v];
+        if(roles.length)break;
+      }
+    }
+    roles=roles.map(r=>{
+      if(typeof r==='number') return ROLE_INT_MAP[r]||r;
+      if(typeof r==='string'){
+        const n=Number(r);
+        if(!isNaN(n)&&ROLE_INT_MAP[n]) return ROLE_INT_MAP[n];
+        const match=Object.values(ROLE_INT_MAP).find(x=>x.toLowerCase()===r.toLowerCase());
+        return match||r;
+      }
+      return r;
+    }).filter(Boolean);
+    const name=
+      d['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']||
+      d['http://schemas.microsoft.com/ws/2008/06/identity/claims/name']||
+      d.name||d.unique_name||d.sub||'مستخدم';
+    return {roles:roles.length?roles:['Guest'],name};
+  }catch{
+    return {roles:['Guest'],name:'ضيف'};
+  }
+}
+function persistSession(data){
+  localStorage.setItem('hs_token',data.accessToken);
+  if(data.refreshToken) localStorage.setItem('hs_refreshToken',data.refreshToken);
+  const decoded=decodeToken(data.accessToken);
+  localStorage.setItem('hs_role',decoded.roles?.[0]||'Guest');
+  localStorage.setItem('hs_name',decoded.name||data.fullName||'مستخدم');
+}
+
+// ===== AXIOS =====
+const axiosInstance=axios.create({baseURL:API_BASE,headers:{'Content-Type':'application/json'}});
+axiosInstance.interceptors.request.use(c=>{
+  const t=getToken();
+  if(t)c.headers.Authorization='Bearer '+t;
+  return c;
+});
+let isRefreshing=false, failedQueue=[];
+const processQueue=(e,t=null)=>{failedQueue.forEach(p=>e?p.reject(e):p.resolve(t));failedQueue=[]};
+axiosInstance.interceptors.response.use(r=>r,async e=>{
+  const o=e.config;
+  if(e.response?.status===401&&!o._retry){
+    if(isRefreshing){
+      return new Promise((resolve,reject)=>failedQueue.push({resolve,reject}))
+      .then(t=>{o.headers.Authorization='Bearer '+t;return axiosInstance(o)})
+      .catch(err=>Promise.reject(err));
+    }
+    o._retry=true; isRefreshing=true;
+    const rt=localStorage.getItem('hs_refreshToken');
+    if(!rt){isRefreshing=false;window.logout();return Promise.reject(e)}
+    try{
+      const res=await axios.post(API_BASE+EP.refresh,{refreshToken:rt,accessToken:getToken()});
+      const nt=res.data.accessToken;
+      localStorage.setItem('hs_token',nt);
+      if(res.data.refreshToken)localStorage.setItem('hs_refreshToken',res.data.refreshToken);
+      processQueue(null,nt);
+      o.headers.Authorization='Bearer '+nt;
+      return axiosInstance(o);
+    }catch(er){
+      processQueue(er,null); window.logout(); showToast('انتهت الجلسة، يرجى تسجيل الدخول مجددًا',true);
+      return Promise.reject(er);
+    }finally{isRefreshing=false}
+  }
+  if(e.response?.status===401)window.logout();
+  return Promise.reject(e);
+});
+
+// ===== CONTEXT =====
+const AppContext=createContext(null);
+const useApp=()=>useContext(AppContext);
+
+// ===== SHARED =====
+function ActionButton({allowed,reason,onClick,children,className='',small=true,disabled=false}){
+  if(allowed && !disabled) return <button type="button" className={`btn ${small?'btn-small':''} ${className}`} onClick={onClick}>{children}</button>;
+  return <span className="tip-wrap" tabIndex={0}>
+    <button type="button" className={`btn ${small?'btn-small':''} locked`} disabled><span style={{marginLeft:4}}>🔒</span>{children}</button>
+    <span className="tip-bubble">{reason||'لا تملك صلاحية هذا الإجراء'}</span>
+  </span>;
+}
+const PasswordRules=[
+  {key:'len',label:'8 أحرف على الأقل',test:p=>p.length>=8},
+  {key:'upper',label:'حرف إنجليزي كبير واحد على الأقل',test:p=>/[A-Z]/.test(p)},
+  {key:'lower',label:'حرف إنجليزي صغير واحد على الأقل',test:p=>/[a-z]/.test(p)},
+  {key:'num',label:'رقم واحد على الأقل',test:p=>/[0-9]/.test(p)},
+  {key:'special',label:'رمز خاص واحد على الأقل',test:p=>/[^A-Za-z0-9]/.test(p)}
+];
+const passwordScore=p=>PasswordRules.filter(r=>r.test(p)).length;
+function PasswordChecklist({password}){
+  const score=passwordScore(password), pct=(score/PasswordRules.length)*100;
+  const color=score<=1?'var(--rust)':score<=3?'var(--gold)':'var(--green)';
+  return <div>
+    <div className="pw-strength-bar"><div className="pw-strength-fill" style={{width:pct+'%',background:color}}></div></div>
+    <ul className="pw-checklist">
+      {PasswordRules.map(r=>{
+        const ok=r.test(password);
+        return <li key={r.key} className={ok?'ok':''}><span className="pw-ic">{ok?'✓':'•'}</span>{r.label}</li>
+      })}
+    </ul>
+  </div>;
+}
+
+// ===== APP =====
+function App(){
+  const [user,setUser]=useState(null);
+  const [activeView,setActiveView]=useState('dashboard');
+  const [loading,setLoading]=useState(false);
+  const [currentRole,setCurrentRole]=useState('Guest');
+  const [userName,setUserName]=useState('');
+  const [sidebarOpen,setSidebarOpen]=useState(false);
+  const [isRealData,setIsRealData]=useState(false);
+
+  const [vaccines,setVaccines]=useState([]);
+  const [vaccinations,setVaccinations]=useState([]);
+  const [healthLogs,setHealthLogs]=useState([]);
+  const [cattleOptions,setCattleOptions]=useState([]);
+  const [cattleList,setCattleList]=useState([]);
+  const [cattleTotal,setCattleTotal]=useState(0);
+  const [staffList,setStaffList]=useState([]);
+  const [weeklyMilk,setWeeklyMilk]=useState([]);
+  const [topProducers,setTopProducers]=useState([]);
+  const [alerts,setAlerts]=useState([]);
+  const [dailyMilk,setDailyMilk]=useState('—');
+
+  const [showVaccineForm,setShowVaccineForm]=useState(false);
+  const [showVaccinationForm,setShowVaccinationForm]=useState(false);
+  const [showHealthForm,setShowHealthForm]=useState(false);
+  const [showCattleForm,setShowCattleForm]=useState(false);
+
+  const normalizedRole=useMemo(()=>typeof currentRole==='number'?ROLE_INT_MAP[currentRole]||'Guest':currentRole||'Guest',[currentRole]);
+  const permissions=useMemo(()=>ROLES_DEF[normalizedRole]||ROLES_DEF.Guest,[normalizedRole]);
+  const hasPermission=useCallback(p=>permissions.includes(p),[permissions]);
+  const isOwner=normalizedRole===STAFF_MANAGER_ROLE;
+
+  const closeSidebar=()=>setSidebarOpen(false);
+  const toggleSidebar=()=>setSidebarOpen(v=>!v);
+
+  const loadMockData=()=>{
+    setVaccines(MOCK.vaccines);
+    setVaccinations(MOCK.vaccinations);
+    setHealthLogs(MOCK.healthLogs);
+    setCattleOptions(MOCK.cattle.map(c=>({id:c.id,tagNumber:c.tagNumber})));
+    setCattleList(MOCK.cattle);
+    setCattleTotal(MOCK.cattle.length);
+    setStaffList(MOCK.staff);
+    setTopProducers(MOCK.topProducers);
+    setWeeklyMilk(MOCK.weeklyMilk);
+    setDailyMilk('1,840');
+    setAlerts(MOCK.alerts);
+    setIsRealData(false);
+    setLoading(false);
+  };
+
+  const loadRealData=useCallback(async()=>{
+    setLoading(true);
+    const safe=(p,f)=>p.catch(()=>f);
+    try{
+      const [vacs,vaccs,logs,cattleRes,staff,top]=await Promise.all([
+        safe(axiosInstance.get(EP.vaccines+'?Page=1&PageSize=100').then(r=>r.data.items||[]),[]),
+        safe(axiosInstance.get(EP.vaccinations+'?Page=1&PageSize=100').then(r=>r.data.items||[]),[]),
+        safe(axiosInstance.get(EP.healthLogs+'?Page=1&PageSize=100').then(r=>r.data.items||[]),[]),
+        safe(axiosInstance.get(EP.cattle+'?Page=1&PageSize=100').then(r=>r.data),{items:[],totalCount:0}),
+        safe(axiosInstance.get(EP.users+'?Page=1&PageSize=100').then(r=>r.data.items||[]),[]),
+        safe(axiosInstance.get(EP.milkTop+'?Top=5').then(r=>r.data||[]),[])
+      ]);
+      const cItems=cattleRes.items||[];
+      setVaccines(vacs); setVaccinations(vaccs); setHealthLogs(logs);
+      setCattleList(cItems); setCattleOptions(cItems.map(c=>({id:c.id,tagNumber:c.tagNumber})));
+      setCattleTotal(cattleRes.totalCount ?? cItems.length);
+      setStaffList(staff); setTopProducers(top);
+
+      const days=Array.from({length:7},(_,i)=>6-i).map(i=>{
+        const d=new Date(); d.setDate(d.getDate()-i);
+        const from=new Date(d); from.setHours(0,0,0,0);
+        const to=new Date(d); to.setHours(23,59,59,999);
+        return {from,to};
+      });
+      const wk=await Promise.all(days.map(({from,to})=>
+        safe(axiosInstance.get(`${EP.milkSummary}?from=${from.toISOString()}&to=${to.toISOString()}`).then(r=>r.data.totalLiters||0),0)
+      ));
+      setWeeklyMilk(wk);
+      setDailyMilk(wk.length?wk[wk.length-1].toLocaleString('en-US'):'0');
+      setAlerts([]);
+      setIsRealData(true);
+    }catch(e){
+      showToast('تعذر تحميل بعض البيانات: '+errMsg(e),true);
+      setVaccines([]); setVaccinations([]); setHealthLogs([]); setCattleList([]); setCattleOptions([]);
+      setCattleTotal(0); setStaffList([]); setTopProducers([]); setWeeklyMilk([]); setDailyMilk('—'); setAlerts([]);
+      setIsRealData(true);
+    }finally{setLoading(false)}
+  },[]);
+
+  const loadData=useCallback(()=>isLoggedIn()?loadRealData():loadMockData(),[loadRealData]);
+
+  useEffect(()=>{
+    if(isLoggedIn()){
+      const decoded=decodeToken(getToken());
+      const roles=decoded.roles||['Guest'];
+      const primary=roles[0]||'Guest';
+      setCurrentRole(primary);
+      setUserName(decoded.name||localStorage.getItem('hs_name')||'مستخدم');
+      setUser({name:decoded.name||'مستخدم',roles});
+      loadRealData();
+    }else{
+      setCurrentRole('Guest');
+      setUserName('ضيف');
+      setUser({name:'ضيف',roles:['Guest']});
+      loadMockData();
+    }
+  },[]);
+
+  useEffect(()=>{ if(activeView==='staff'&&!isOwner) setActiveView('dashboard') },[activeView,isOwner]);
+
+  const handleRoleChange=e=>{
+    const nr=e.target.value;
+    if(isLoggedIn()) return;
+    setCurrentRole(nr);
+    if(activeView==='staff'&&nr!=='Owner') setActiveView('dashboard');
+    showToast('تم التبديل إلى دور: '+roleNames[nr]);
+  };
+
+  const ctx={
+    user,userName,currentRole:normalizedRole,isOwner,hasPermission,loading,isRealData,
+    vaccines,setVaccines,vaccinations,setVaccinations,healthLogs,setHealthLogs,cattleOptions,
+    cattleList,setCattleList,cattleTotal,staffList,setStaffList,weeklyMilk,topProducers,dailyMilk,alerts,setAlerts,
+    showVaccineForm,setShowVaccineForm,showVaccinationForm,setShowVaccinationForm,showHealthForm,setShowHealthForm,
+    showCattleForm,setShowCattleForm,loadData,handleRoleChange,logout,sidebarOpen,toggleSidebar,closeSidebar
+  };
+
+  return <AppContext.Provider value={ctx}>
+    <div className="app">
+      <Topbar/>
+      <div className="app-body">
+        <Sidebar activeView={activeView} setActiveView={setActiveView}/>
+        <main className="content">
+          {activeView==='dashboard'&&<Dashboard setActiveView={setActiveView}/>}
+          {activeView==='cattle'&&<CattleManagement/>}
+          {activeView==='health'&&<HealthManagement/>}
+          {activeView==='staff'&&isOwner&&<StaffManagement/>}
+          {activeView==='alerts'&&<AlertsPage/>}
+        </main>
+      </div>
+    </div>
+  </AppContext.Provider>;
+}
+
+// ===== TOPBAR =====
+function Topbar(){
+  const {user,userName,currentRole,handleRoleChange,toggleSidebar,closeSidebar,sidebarOpen}=useApp();
+  const isGuest=currentRole==='Guest'||!isLoggedIn();
+  return <>
+    <header className="topbar">
+      <div className="brand"><span className="mark"><span>🐄</span></span>هيردسمارت</div>
+      <div className="top-right">
+        <span className="status-badge"><span className={'status-dot '+(isLoggedIn()?'on':'')}></span>{isLoggedIn()?'متصل':'تجريبي'}</span>
+        {isGuest && <div className="role-switch">
+          <span>🧑‍🌾</span>
+          <select value={currentRole} onChange={handleRoleChange}>
+            <option value="Owner">مالك</option>
+            <option value="Vet">بيطري</option>
+            <option value="Worker">عامل</option>
+          </select>
+        </div>}
+        {user && !isGuest && <span className="user-chip">👋<strong>{userName||user.name}</strong><span className="role-tag">{roleNames[currentRole]||currentRole}</span></span>}
+        {isLoggedIn()
+          ? <button className="btn btn-outline btn-small" onClick={()=>window.logout()}>خروج</button>
+          : <>
+              <button className="btn btn-outline btn-small" onClick={()=>window.openAuthModal('login')}>دخول</button>
+              <button className="btn btn-solid btn-small" onClick={()=>window.openAuthModal('register')}>حساب جديد</button>
+            </>
+        }
+        <button className="hamburger" onClick={toggleSidebar} aria-label="القائمة">{sidebarOpen?'✕':'☰'}</button>
+      </div>
+    </header>
+    {sidebarOpen&&<div className="sidebar-overlay open" onClick={closeSidebar}></div>}
+  </>;
+}
+
+// ===== SIDEBAR =====
+function Sidebar({activeView,setActiveView}){
+  const {isOwner,sidebarOpen,closeSidebar}=useApp();
+  const items=[
+    {id:'dashboard',icon:'📊',label:'لوحة التحكم'},
+    {id:'cattle',icon:'🐮',label:'الماشية'},
+    {id:'health',icon:'💉',label:'الطبي والتطعيمات'},
+    {id:'alerts',icon:'📡',label:'التنبيهات'}
+  ];
+  if(isOwner) items.push({id:'staff',icon:'👥',label:'الموظفين'});
+  const go=id=>{setActiveView(id);closeSidebar()};
+  return <aside className={'sidebar'+(sidebarOpen?' open':'')}>
+    {items.map(i=><button key={i.id} className={'nav-item'+(activeView===i.id?' active':'')} onClick={()=>go(i.id)}><span>{i.icon}</span><span>{i.label}</span></button>)}
+    <div className="sidebar-foot">v1.1.0</div>
+  </aside>;
+}
+
+// ===== DASHBOARD =====
+function Dashboard({setActiveView}){
+  const {cattleOptions,cattleTotal,topProducers,dailyMilk,weeklyMilk,alerts,isRealData,loading,currentRole}=useApp();
+  const [temp,setTemp]=useState(6.5), [move,setMove]=useState(5.2);
+  const totalCattle=isRealData?(cattleTotal||0):(cattleOptions.length||0);
+  const activeAlerts=alerts.filter(a=>a.active).length;
+  const isGuest=currentRole==='Guest'||!isLoggedIn();
+
+  useEffect(()=>{
+    if(isRealData)return;
+    const iv=setInterval(()=>{
+      const rnd=()=>Math.max(1,Math.min(10,Math.round((5+(Math.random()-.5)*6)*10)/10));
+      setTemp(rnd()); setMove(rnd());
+    },4000);
+    return ()=>clearInterval(iv);
+  },[isRealData]);
+
+  const gaugeColor=v=>v>=9?'#A85234':v>=7?'#C79A45':'#3C6B41';
+  const totalWk=weeklyMilk.reduce((a,b)=>a+b,0)||0;
+  const avgWk=weeklyMilk.length?Math.round(totalWk/weeklyMilk.length):0;
+
+  if(loading) return <div className="loading-box"><span className="spinner"></span>جاري تحميل لوحة التحكم...</div>;
+
+  return <div className="view">
+    <div className="view-head">
+      <div><h1>📊 لوحة التحكم</h1><p>نظرة عامة لحظية على المزرعة</p></div>
+      <span className="live-badge"><span className="live-dot"></span>{isRealData?'بيانات حية من مزرعتك':'بيانات تجريبية للعرض فقط'}</span>
+    </div>
+
+    {isGuest && <div className="feature-hero">
+      <h2>🌾 هيردسمارت — إدارة ذكية للمزرعة</h2>
+      <p>أنت الآن في النسخة التجريبية. أنشئ حساب مزرعتك وابدأ بإدارة الماشية، التطعيمات، السجلات الصحية، الموظفين، والإنتاج من مكان واحد.</p>
+      <div className="feature-grid">
+        {[
+          ['🐮','إدارة الماشية','سجل كامل لكل رأس'],
+          ['💉','التطعيمات','جدولة وتتبع تلقائي'],
+          ['🩺','السجلات الصحية','تشخيص وعلاج موثق'],
+          ['🥛','إنتاج الحليب','تحليل يومي وأسبوعي'],
+          ['📡','التنبيهات','إشعارات لحظية'],
+          ['👥','الموظفون','صلاحيات دقيقة للأدوار']
+        ].map(([icon,title,desc],i)=><div key={i} className="feature-chip"><div className="fc-ic">{icon}</div><div className="fc-title">{title}</div><div className="fc-desc">{desc}</div></div>)}
+      </div>
+      <div className="modal-actions" style={{marginTop:14,maxWidth:220}}>
+        <button className="btn btn-solid" style={{background:'#fff',color:'var(--deep)'}} onClick={()=>window.openAuthModal('register')}>ابدأ الآن مجانًا</button>
+      </div>
+    </div>}
+
+    <div className="stat-row">
+      <div className="stat-card" style={{cursor:'pointer'}} onClick={()=>setActiveView('cattle')}>
+        <div className="label">إجمالي الماشية</div><div className="value num">{totalCattle}</div><div className="sub">رأس</div>
+      </div>
+      <div className="stat-card">
+        <div className="label">إنتاج اليوم</div><div className="value num">{dailyMilk}</div><div className="sub">لتر</div>
+      </div>
+      <div className="stat-card" style={{cursor:'pointer'}} onClick={()=>setActiveView('alerts')}>
+        <div className="label">التنبيهات النشطة</div><div className="value num rust">{activeAlerts}</div><div className="sub">مستشعرات</div>
+      </div>
+    </div>
+
+    <div className="panel-grid">
+      <div className="card-box">
+        <h4>📈 إنتاج الأسبوع <span>🥛</span></h4>
+        {totalWk===0 && weeklyMilk.every(v=>v===0)
+          ? <div className="empty-state"><div className="es-ic">🥛</div><div className="es-title">لا يوجد إنتاج حليب مسجّل بعد</div><div className="es-sub">ابدأ بتسجيل الحلب اليومي لتظهر البيانات هنا.</div></div>
+          : <>
+              <div style={{fontSize:'1rem',fontWeight:900,color:'var(--deep)',padding:'6px 0'}}>إجمالي: {totalWk.toLocaleString()} لتر</div>
+              <div style={{fontSize:'.8rem',color:'var(--soft)'}}>المعدل اليومي: {avgWk} لتر</div>
+              <div style={{marginTop:10,display:'flex',gap:3,alignItems:'flex-end',height:52}}>
+                {weeklyMilk.map((v,i)=>{
+                  const h=Math.max(4,(v/(Math.max(...weeklyMilk,100))*42));
+                  return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                    <div style={{width:'100%',height:h,background:'var(--green)',borderRadius:'4px 4px 0 0',transition:'height .5s'}}></div>
+                    <span style={{fontSize:'.55rem',color:'var(--soft)',marginTop:2}}>يوم</span>
+                  </div>;
+                })}
+              </div>
+            </>
+        }
+      </div>
+
+      <div className="card-box">
+        <h4>📡 المستشعرات {!isRealData&&<span className="live-badge"><span className="live-dot"></span>عرض تجريبي</span>}</h4>
+        {isRealData
+          ? <div className="empty-state"><div className="es-ic">📶</div><div className="es-title">لا توجد أجهزة استشعار مربوطة بعد</div><div className="es-sub">بمجرد ربط الأجهزة ستظهر القراءات هنا لحظيًا.</div></div>
+          : <div className="gauge-grid">
+              {[
+                ['🌡️ الحرارة',temp],
+                ['🏃 الحركة',move]
+              ].map(([label,val],i)=><div className="gauge" key={i}>
+                <div className="g-label">{label}</div>
+                <div className="g-value num" style={{color:gaugeColor(val)}}>{val.toFixed(1)}/10</div>
+                <div className="g-bar"><div className="g-fill" style={{width:(val*10)+'%',background:gaugeColor(val)}}></div></div>
+              </div>)}
+            </div>
+        }
+        <div style={{marginTop:12}}>
+          <h4 style={{fontSize:'.86rem'}}>🏆 أعلى الإنتاج</h4>
+          {!topProducers.length
+            ? <div className="empty-state"><div className="es-sub">لا توجد بيانات كافية بعد</div></div>
+            : topProducers.map((p,i)=><div key={i} className="producer-row"><span>🐄 #{p.tagNumber}</span><span className="liters num">{Number(p.totalLiters).toFixed(1)} لتر</span></div>)
+          }
+        </div>
+      </div>
+    </div>
+
+    <div className="card-box">
+      <h4>🔔 آخر التنبيهات</h4>
+      {!alerts.length
+        ? <div className="empty-state"><div className="es-ic">{isRealData?'📡':'🎉'}</div><div className="es-title">{isRealData?'لا توجد تنبيهات — لم يتم ربط مستشعرات بعد':'لا توجد تنبيهات نشطة حاليًا'}</div></div>
+        : alerts.slice(0,3).map(a=><div key={a.id} className="alert-item">
+            <span className={'dot '+(a.active?'red':'gray')}></span>
+            <div className="body"><div><strong>{a.text}</strong></div><div className="meta">{a.time} · <span className={'badge '+(a.active?'active':'ok')}>{a.active?'نشط':'تم الحل'}</span></div></div>
+          </div>)
+      }
+    </div>
+  </div>;
+}
+
+// ===== CATTLE =====
+function CattleManagement(){
+  const {hasPermission,loading,cattleList,setCattleList,cattleTotal,showCattleForm,setShowCattleForm,loadData,isRealData}=useApp();
+  const emptyForm={tagNumber:'',breed:'',gender:0,birthDate:'',fatherTagNumber:'',motherTagNumber:''};
+  const [form,setForm]=useState(emptyForm), [errors,setErrors]=useState({});
+  const [search,setSearch]=useState(''), [statusFilter,setStatusFilter]=useState('all');
+  const [savingStatusId,setSavingStatusId]=useState(null), [deletingId,setDeletingId]=useState(null);
+
+  const validate=()=>{
+    const e={};
+    if(!form.tagNumber.trim())e.tagNumber='رقم التاج مطلوب';
+    if(!form.breed.trim())e.breed='السلالة مطلوبة';
+    if(!form.birthDate)e.birthDate='تاريخ الميلاد مطلوب';
+    else if(new Date(form.birthDate)>new Date())e.birthDate='تاريخ الميلاد لا يمكن أن يكون في المستقبل';
+    setErrors(e); return !Object.keys(e).length;
+  };
+
+  const handleAdd=async ev=>{
+    ev.preventDefault();
+    if(!hasPermission('create_cattle')) return showToast('ليس لديك صلاحية لإضافة ماشية',true);
+    if(!validate()) return;
+    try{
+      const payload={
+        tagNumber:form.tagNumber.trim(),
+        breed:form.breed.trim(),
+        gender:Number(form.gender),
+        birthDate:new Date(form.birthDate).toISOString(),
+        fatherTagNumber:form.fatherTagNumber.trim()||null,
+        motherTagNumber:form.motherTagNumber.trim()||null
+      };
+      const res=await axiosInstance.post(EP.cattle,payload);
+      setCattleList([res.data,...cattleList]);
+      setShowCattleForm(false); setForm(emptyForm); setErrors({});
+      showToast('تم تسجيل رأس الماشية بنجاح'); loadData();
+    }catch(err){showToast('فشل الإضافة: '+errMsg(err),true)}
+  };
+
+  const handleStatusChange=async(cattle,newStatus)=>{
+    if(!hasPermission('edit_cattle')) return showToast('ليس لديك صلاحية لتعديل الحالة',true);
+    setSavingStatusId(cattle.id);
+    try{
+      await axiosInstance.put(EP.cattleStatus(cattle.id),{id:cattle.id,newStatus:Number(newStatus)});
+      setCattleList(cattleList.map(c=>c.id===cattle.id?{...c,status:Number(newStatus)}:c));
+      showToast('تم تحديث حالة الماشية');
+    }catch(err){showToast('فشل تحديث الحالة: '+errMsg(err),true)}
+    finally{setSavingStatusId(null)}
+  };
+
+  const handleDelete=async cattle=>{
+    if(!isRealData) return showToast('لا يمكن حذف بيانات تجريبية',true);
+    if(!hasPermission('delete_cattle')) return showToast('الحذف متاح فقط لمالك المزرعة',true);
+    if(!window.confirm(`هل أنت متأكد من حذف رأس الماشية رقم ${cattle.tagNumber}؟`)) return;
+    setDeletingId(cattle.id);
+    try{
+      await axiosInstance.delete(EP.cattleOne(cattle.id));
+      setCattleList(cattleList.filter(c=>c.id!==cattle.id));
+      showToast('تم حذف رأس الماشية'); loadData();
+    }catch(err){showToast('فشل الحذف: '+errMsg(err,'حدث خطأ أثناء الحذف، تأكد أن البقرة غير مرتبطة ببيانات أخرى'),true)}
+    finally{setDeletingId(null)}
+  };
+
+  const filtered=cattleList.filter(c=>{
+    const s=(c.tagNumber||'').toLowerCase(), b=(c.breed||'').toLowerCase(), q=search.toLowerCase();
+    return (!q||s.includes(q)||b.includes(q)) && (statusFilter==='all'||String(c.status)===statusFilter);
+  });
+
+  if(loading) return <div className="loading-box"><span className="spinner"></span>جاري تحميل بيانات الماشية...</div>;
+
+  return <div className="view">
+    <div className="view-head">
+      <div><h1>🐮 إدارة الماشية</h1><p>سجل كامل لقطيع المزرعة — {cattleTotal} رأس {isRealData?'':'(بيانات تجريبية)'}</p></div>
+      <ActionButton allowed={hasPermission('create_cattle')&&isRealData} reason="إضافة ماشية جديدة متاحة للمالك والطبيب البيطري فقط" className="btn-solid" onClick={()=>setShowCattleForm(true)}>+ تسجيل رأس ماشية</ActionButton>
+    </div>
+
+    {showCattleForm && hasPermission('create_cattle') && isRealData && <div className="card-box">
+      <h4>تسجيل رأس ماشية جديد</h4>
+      <form onSubmit={handleAdd}>
+        <div className="form-grid-3">
+          <div className="field"><label>رقم التاج *</label><input value={form.tagNumber} onChange={e=>setForm({...form,tagNumber:e.target.value})} placeholder="مثال: A501"/>{errors.tagNumber&&<span className="field-error">{errors.tagNumber}</span>}</div>
+          <div className="field"><label>السلالة *</label><input value={form.breed} onChange={e=>setForm({...form,breed:e.target.value})} placeholder="مثال: هولشتاين"/>{errors.breed&&<span className="field-error">{errors.breed}</span>}</div>
+          <div className="field"><label>الجنس *</label><select value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})}><option value={0}>ذكر</option><option value={1}>أنثى</option></select></div>
+          <div className="field"><label>تاريخ الميلاد *</label><input type="date" value={form.birthDate} onChange={e=>setForm({...form,birthDate:e.target.value})}/>{errors.birthDate&&<span className="field-error">{errors.birthDate}</span>}</div>
+          <div className="field"><label>رقم تاج الأب</label><input value={form.fatherTagNumber} onChange={e=>setForm({...form,fatherTagNumber:e.target.value})}/></div>
+          <div className="field"><label>رقم تاج الأم</label><input value={form.motherTagNumber} onChange={e=>setForm({...form,motherTagNumber:e.target.value})}/></div>
+        </div>
+        <div className="modal-actions">
+          <button type="submit" className="btn btn-solid">حفظ</button>
+          <button type="button" className="btn btn-outline" onClick={()=>{setShowCattleForm(false);setForm(emptyForm);setErrors({})}}>إلغاء</button>
+        </div>
+      </form>
+    </div>}
+
+    <div className="card-box">
+      <h4>القطيع
+        <span style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          <input placeholder="بحث برقم التاج أو السلالة..." value={search} onChange={e=>setSearch(e.target.value)} style={{padding:'5px 8px',borderRadius:8,border:'1px solid var(--line)',fontSize:'.75rem',minWidth:160}}/>
+          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{padding:'5px 8px',borderRadius:8,border:'1px solid var(--line)',fontSize:'.75rem'}}>
+            <option value="all">كل الحالات</option>
+            {Object.entries(CATTLE_STATUS_MAP).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </span>
+      </h4>
+      <div className="table-scroll">
+        <table>
+          <thead><tr><th>رقم التاج</th><th>السلالة</th><th>الجنس</th><th>العمر</th><th>الأب/الأم</th><th>الحالة</th><th>إجراء</th></tr></thead>
+          <tbody>
+            {!filtered.length
+              ? <tr><td colSpan="7"><div className="empty-state"><div className="es-ic">🐄</div><div className="es-title">لا توجد نتائج</div><div className="es-sub">جرّب تعديل البحث أو الفلتر.</div></div></td></tr>
+              : filtered.map(c=><tr key={c.id}>
+                  <td><strong>{c.tagNumber}</strong></td>
+                  <td>{c.breed}</td>
+                  <td><span>{GENDER_MAP[c.gender]?.icon}</span> {GENDER_MAP[c.gender]?.label||'—'}</td>
+                  <td>{ageLabel(c.birthDate)}</td>
+                  <td style={{fontSize:'.75rem',color:'var(--soft)'}}>{c.fatherTagNumber||'—'} / {c.motherTagNumber||'—'}</td>
+                  <td>
+                    {hasPermission('edit_cattle')&&isRealData
+                      ? <select value={c.status} disabled={savingStatusId===c.id} onChange={e=>handleStatusChange(c,e.target.value)} style={{padding:'3px 7px',borderRadius:'999px',border:'none',fontSize:'.65rem',fontWeight:800,background:'#F1E3BE',color:'#8A6417'}}>
+                          {Object.entries(CATTLE_STATUS_MAP).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                        </select>
+                      : <span className={'badge '+(CATTLE_STATUS_MAP[c.status]?.cls||'ok')}>{CATTLE_STATUS_MAP[c.status]?.label||'—'}</span>
+                    }
+                  </td>
+                  <td><ActionButton allowed={hasPermission('delete_cattle')&&isRealData} reason="حذف الماشية متاح فقط لمالك المزرعة" className="btn-outline" onClick={()=>handleDelete(c)}>{deletingId===c.id?'...':'🗑️ حذف'}</ActionButton></td>
+                </tr>)
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>;
+}
+
+// ===== HEALTH =====
+function HealthManagement(){
+  const {currentRole,hasPermission,loading,vaccines,setVaccines,vaccinations,setVaccinations,healthLogs,setHealthLogs,cattleOptions,
+    showVaccineForm,setShowVaccineForm,showVaccinationForm,setShowVaccinationForm,showHealthForm,setShowHealthForm,loadData,isRealData}=useApp();
+
+  const [vaccineForm,setVaccineForm]=useState({name:'',targetAgeInMonths:'',dosage:'',intervalInDays:''});
+  const [vaccineErrors,setVaccineErrors]=useState({});
+  const [vaccinationForm,setVaccinationForm]=useState({cattleId:'',vaccineId:'',scheduledDate:''});
+  const [vaccinationErrors,setVaccinationErrors]=useState({});
+  const [healthForm,setHealthForm]=useState({cattleId:'',diagnosis:'',treatmentPlan:'',vetNotes:'',isContagious:false});
+  const [healthErrors,setHealthErrors]=useState({});
+  const [submittingHealth,setSubmittingHealth]=useState(false);
+
+  const vaccineOptions=vaccines.map(v=>({id:v.id,name:v.name}));
+  const canCreateVaccine=currentRole===VACCINE_CREATOR_ROLE&&isRealData;
+  const canScheduleVaccination=hasPermission('schedule_vaccination')&&isRealData;
+  const canAdminister=currentRole===VACCINATION_ADMINISTER_ROLE&&isRealData;
+  const canEditHealth=currentRole===HEALTH_LOG_EDITOR_ROLE&&isRealData;
+
+  const validateVaccine=()=>{
+    const e={}, age=Number(vaccineForm.targetAgeInMonths), dose=Number(vaccineForm.dosage), interval=Number(vaccineForm.intervalInDays);
+    if(!vaccineForm.name.trim())e.name='اسم اللقاح مطلوب';
+    if(isNaN(age)||age<0)e.targetAgeInMonths='العمر يجب أن يكون 0 أو أكبر';
+    if(isNaN(dose)||dose<0)e.dosage='الجرعة يجب أن تكون 0 أو أكبر';
+    if(vaccineForm.intervalInDays && (isNaN(interval)||interval<0))e.intervalInDays='الفاصل يجب أن يكون 0 أو أكبر';
+    setVaccineErrors(e); return !Object.keys(e).length;
+  };
+  const validateVaccination=()=>{
+    const e={};
+    if(!vaccinationForm.cattleId)e.cattleId='اختر بقرة';
+    if(!vaccinationForm.vaccineId)e.vaccineId='اختر لقاح';
+    if(!vaccinationForm.scheduledDate)e.scheduledDate='حدد التاريخ';
+    setVaccinationErrors(e); return !Object.keys(e).length;
+  };
+  const validateHealth=()=>{
+    const e={};
+    if(!healthForm.cattleId)e.cattleId='اختر بقرة';
+    if(!healthForm.diagnosis.trim())e.diagnosis='التشخيص مطلوب';
+    if(!healthForm.treatmentPlan.trim())e.treatmentPlan='خطة العلاج مطلوبة';
+    setHealthErrors(e); return !Object.keys(e).length;
+  };
+
+  const handleAddVaccine=async e=>{
+    e.preventDefault();
+    if(!canCreateVaccine) return showToast('إضافة أنواع اللقاحات مسؤولية الطبيب البيطري فقط',true);
+    if(!validateVaccine()) return;
+    try{
+      const payload={name:vaccineForm.name.trim(),targetAgeInMonths:safeNum(vaccineForm.targetAgeInMonths),dosage:safeNum(vaccineForm.dosage),intervalInDays:vaccineForm.intervalInDays?safeNum(vaccineForm.intervalInDays):null};
+      const res=await axiosInstance.post(EP.vaccines,payload);
+      setVaccines([...vaccines,res.data]);
+      setShowVaccineForm(false); setVaccineForm({name:'',targetAgeInMonths:'',dosage:'',intervalInDays:''});
+      showToast('تم إضافة اللقاح'); loadData();
+    }catch(err){showToast('فشل الإضافة: '+errMsg(err),true)}
+  };
+
+  const handleAddVaccination=async e=>{
+    e.preventDefault();
+    if(!canScheduleVaccination) return showToast('جدولة التطعيم متاحة للمالك والطبيب البيطري فقط',true);
+    if(!validateVaccination()) return;
+    try{
+      const payload={cattleId:vaccinationForm.cattleId,vaccineId:vaccinationForm.vaccineId,scheduledDate:new Date(vaccinationForm.scheduledDate).toISOString()};
+      const res=await axiosInstance.post(EP.vaccinations,payload);
+      setVaccinations([...vaccinations,res.data]);
+      setShowVaccinationForm(false); setVaccinationForm({cattleId:'',vaccineId:'',scheduledDate:''});
+      showToast('تمت الجدولة'); loadData();
+    }catch(err){showToast('فشل الجدولة: '+errMsg(err),true)}
+  };
+
+  const handleAdminister=async id=>{
+    if(!canAdminister) return showToast('تسجيل إعطاء اللقاح مسؤولية الطبيب البيطري فقط',true);
+    try{await axiosInstance.post(EP.vaccAdminister(id),new Date().toISOString()); showToast('تم تسجيل الإعطاء'); loadData();}
+    catch(err){showToast('فشل الإعطاء: '+errMsg(err),true)}
+  };
+
+  const handleAddHealth=async e=>{
+    e.preventDefault();
+    if(!canEditHealth) return showToast('إضافة السجلات الصحية مسؤولية الطبيب البيطري فقط',true);
+    if(submittingHealth||!validateHealth()) return;
+    setSubmittingHealth(true);
+    try{
+      const payload={cattleId:healthForm.cattleId,diagnosis:healthForm.diagnosis.trim(),treatmentPlan:healthForm.treatmentPlan.trim(),vetNotes:healthForm.vetNotes.trim()||null,isContagious:healthForm.isContagious};
+      const res=await axiosInstance.post(EP.healthLogs,payload);
+      setHealthLogs([...healthLogs,res.data]);
+      setShowHealthForm(false); setHealthForm({cattleId:'',diagnosis:'',treatmentPlan:'',vetNotes:'',isContagious:false});
+      showToast('تم إضافة السجل الصحي'); loadData();
+    }catch(err){showToast('فشل الإضافة: '+errMsg(err),true)}
+    finally{setSubmittingHealth(false)}
+  };
+
+  if(loading) return <div className="loading-box"><span className="spinner"></span>جاري تحميل البيانات...</div>;
+
+  return <div className="view">
+    <div className="view-head"><div><h1>💉 الجدول الطبي والتطعيمات</h1><p>إدارة اللقاحات، التطعيمات، والسجلات الصحية</p></div></div>
+
+    <div className="card-box">
+      <h4>أنواع اللقاحات <ActionButton allowed={canCreateVaccine} reason="إضافة أنواع اللقاحات مسؤولية الطبيب البيطري فقط" className="btn-solid" onClick={()=>setShowVaccineForm(true)}>+ إضافة لقاح</ActionButton></h4>
+      {showVaccineForm && canCreateVaccine && <div className="card-box" style={{marginBottom:12}}>
+        <h4>إضافة نوع لقاح جديد</h4>
+        <form onSubmit={handleAddVaccine}>
+          <div className="form-grid-2">
+            <div className="field"><label>اسم اللقاح *</label><input value={vaccineForm.name} onChange={e=>setVaccineForm({...vaccineForm,name:e.target.value})}/>{vaccineErrors.name&&<span className="field-error">{vaccineErrors.name}</span>}</div>
+            <div className="field"><label>العمر المستهدف (شهر) *</label><input type="number" min="0" step="1" value={vaccineForm.targetAgeInMonths} onChange={e=>setVaccineForm({...vaccineForm,targetAgeInMonths:e.target.value})}/>{vaccineErrors.targetAgeInMonths&&<span className="field-error">{vaccineErrors.targetAgeInMonths}</span>}</div>
+            <div className="field"><label>الجرعة *</label><input type="number" min="0" step="0.1" value={vaccineForm.dosage} onChange={e=>setVaccineForm({...vaccineForm,dosage:e.target.value})}/>{vaccineErrors.dosage&&<span className="field-error">{vaccineErrors.dosage}</span>}</div>
+            <div className="field"><label>الفاصل الزمني (أيام)</label><input type="number" min="0" step="1" value={vaccineForm.intervalInDays} onChange={e=>setVaccineForm({...vaccineForm,intervalInDays:e.target.value})}/>{vaccineErrors.intervalInDays&&<span className="field-error">{vaccineErrors.intervalInDays}</span>}</div>
+          </div>
+          <div className="modal-actions"><button type="submit" className="btn btn-solid">حفظ</button><button type="button" className="btn btn-outline" onClick={()=>setShowVaccineForm(false)}>إلغاء</button></div>
+        </form>
+      </div>}
+      <div className="table-scroll"><table><thead><tr><th>الاسم</th><th>العمر (شهر)</th><th>الجرعة</th><th>الفاصل (يوم)</th></tr></thead><tbody>{!vaccines.length?<tr><td colSpan="4">لا توجد لقاحات</td></tr>:vaccines.map(v=><tr key={v.id}><td>{v.name}</td><td>{v.targetAgeInMonths}</td><td>{v.dosage}</td><td>{v.intervalInDays||'—'}</td></tr>)}</tbody></table></div>
+    </div>
+
+    <div className="card-box">
+      <h4>التطعيمات <ActionButton allowed={canScheduleVaccination} reason="جدولة التطعيمات متاحة للمالك والطبيب البيطري فقط" className="btn-solid" onClick={()=>setShowVaccinationForm(true)}>+ جدولة تطعيم</ActionButton></h4>
+      {showVaccinationForm && canScheduleVaccination && <div className="card-box" style={{marginBottom:12}}>
+        <h4>جدولة تطعيم جديد</h4>
+        <form onSubmit={handleAddVaccination}>
+          <div className="form-grid-3">
+            <div className="field"><label>البقرة *</label><select value={vaccinationForm.cattleId} onChange={e=>setVaccinationForm({...vaccinationForm,cattleId:e.target.value})}><option value="">اختر بقرة</option>{cattleOptions.map(c=><option key={c.id} value={c.id}>{c.tagNumber}</option>)}</select>{vaccinationErrors.cattleId&&<span className="field-error">{vaccinationErrors.cattleId}</span>}</div>
+            <div className="field"><label>نوع اللقاح *</label><select value={vaccinationForm.vaccineId} onChange={e=>setVaccinationForm({...vaccinationForm,vaccineId:e.target.value})}><option value="">اختر لقاح</option>{vaccineOptions.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select>{vaccinationErrors.vaccineId&&<span className="field-error">{vaccinationErrors.vaccineId}</span>}</div>
+            <div className="field"><label>التاريخ *</label><input type="date" value={vaccinationForm.scheduledDate} onChange={e=>setVaccinationForm({...vaccinationForm,scheduledDate:e.target.value})}/>{vaccinationErrors.scheduledDate&&<span className="field-error">{vaccinationErrors.scheduledDate}</span>}</div>
+          </div>
+          <div className="modal-actions"><button type="submit" className="btn btn-solid">حفظ</button><button type="button" className="btn btn-outline" onClick={()=>setShowVaccinationForm(false)}>إلغاء</button></div>
+        </form>
+      </div>}
+      <div className="table-scroll"><table><thead><tr><th>البقرة</th><th>اللقاح</th><th>الموعد</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>
+        {!vaccinations.length?<tr><td colSpan="5">لا توجد تطعيمات</td></tr>:vaccinations.map(v=><tr key={v.id}>
+          <td>{v.cattleTagNumber}</td>
+          <td>{v.vaccineName}</td>
+          <td>{formatDate(v.scheduledDate)}</td>
+          <td><span className={'badge '+(v.administeredDate?'ok':'pending')}>{v.administeredDate?'تم الإعطاء':'مجدول'}</span></td>
+          <td>{!v.administeredDate&&<ActionButton allowed={canAdminister} reason="تسجيل إعطاء اللقاح متاح للطبيب البيطري فقط" className="btn-outline" onClick={()=>handleAdminister(v.id)}>تم الإعطاء</ActionButton>}</td>
+        </tr>)}
+      </tbody></table></div>
+    </div>
+
+    <div className="card-box">
+      <h4>السجلات الصحية <ActionButton allowed={canEditHealth} reason="إضافة السجلات الصحية مسؤولية الطبيب البيطري فقط" className="btn-solid" onClick={()=>setShowHealthForm(true)}>+ إضافة سجل صحي</ActionButton></h4>
+      {showHealthForm && canEditHealth && <div className="card-box" style={{marginBottom:12}}>
+        <h4>إضافة سجل صحي جديد</h4>
+        <form onSubmit={handleAddHealth}>
+          <div className="form-grid-2">
+            <div className="field"><label>البقرة *</label><select value={healthForm.cattleId} onChange={e=>setHealthForm({...healthForm,cattleId:e.target.value})}><option value="">اختر بقرة</option>{cattleOptions.map(c=><option key={c.id} value={c.id}>{c.tagNumber}</option>)}</select>{healthErrors.cattleId&&<span className="field-error">{healthErrors.cattleId}</span>}</div>
+            <div className="field"><label>التشخيص *</label><input value={healthForm.diagnosis} onChange={e=>setHealthForm({...healthForm,diagnosis:e.target.value})}/>{healthErrors.diagnosis&&<span className="field-error">{healthErrors.diagnosis}</span>}</div>
+            <div className="field"><label>خطة العلاج *</label><input value={healthForm.treatmentPlan} onChange={e=>setHealthForm({...healthForm,treatmentPlan:e.target.value})}/>{healthErrors.treatmentPlan&&<span className="field-error">{healthErrors.treatmentPlan}</span>}</div>
+            <div className="field"><label>ملاحظات البيطري</label><input value={healthForm.vetNotes} onChange={e=>setHealthForm({...healthForm,vetNotes:e.target.value})}/></div>
+            <div className="field" style={{display:'flex',alignItems:'center',gap:6}}><label style={{margin:0}}><input type="checkbox" checked={healthForm.isContagious} onChange={e=>setHealthForm({...healthForm,isContagious:e.target.checked})}/> حالة معدية</label></div>
+          </div>
+          <div className="modal-actions">
+            <button type="submit" className="btn btn-solid" disabled={submittingHealth}>{submittingHealth?'...جاري الحفظ':'حفظ'}</button>
+            <button type="button" className="btn btn-outline" onClick={()=>setShowHealthForm(false)} disabled={submittingHealth}>إلغاء</button>
+          </div>
+        </form>
+      </div>}
+      <div className="table-scroll"><table><thead><tr><th>البقرة</th><th>التشخيص</th><th>خطة العلاج</th><th>معدية؟</th></tr></thead><tbody>{!healthLogs.length?<tr><td colSpan="4">لا توجد سجلات صحية</td></tr>:healthLogs.map(h=><tr key={h.id}><td>{h.cattleTagNumber}</td><td>{h.diagnosis}</td><td>{h.treatmentPlan}</td><td>{h.isContagious?'نعم':'لا'}</td></tr>)}</tbody></table></div>
+    </div>
+  </div>;
+}
+
+// ===== STAFF =====
+function StaffManagement(){
+  const {staffList,setStaffList,isOwner,loadData,isRealData}=useApp();
+  const [showForm,setShowForm]=useState(false);
+  const [formData,setFormData]=useState({fullName:'',email:'',password:'',role:'Vet'});
+  const [errors,setErrors]=useState({});
+
+  if(!isOwner) return <div className="card-box"><div className="empty-state"><div className="es-ic">🔒</div><div className="es-title">هذه الصفحة متاحة لمالك المزرعة فقط</div><div className="es-sub">ليس لديك صلاحية الوصول إلى إدارة الموظفين</div></div></div>;
+
+  const validate=()=>{
+    const e={};
+    if(!formData.fullName.trim())e.fullName='الاسم مطلوب';
+    if(!formData.email.trim())e.email='البريد الإلكتروني مطلوب';
+    else if(!isEmail(formData.email))e.email='صيغة البريد الإلكتروني غير صحيحة';
+    if(!formData.password||formData.password.length<6)e.password='كلمة المرور 6 أحرف على الأقل';
+    setErrors(e); return !Object.keys(e).length;
+  };
+
+  const handleAdd=async e=>{
+    e.preventDefault();
+    if(!isOwner) return showToast('إدارة الموظفين متاحة لمالك المزرعة فقط',true);
+    if(!isRealData) return showToast('لا يمكن تعديل بيانات تجريبية',true);
+    if(!validate()) return;
+    try{
+      const payload={fullName:formData.fullName.trim(),email:formData.email.trim(),password:formData.password,role:ROLE_STRING_TO_INT[formData.role]};
+      const res=await axiosInstance.post(EP.users,payload);
+      setStaffList([...staffList,res.data]);
+      setShowForm(false); setFormData({fullName:'',email:'',password:'',role:'Vet'}); setErrors({});
+      showToast('تم إضافة الموظف'); loadData();
+    }catch(err){showToast('فشل الإضافة: '+errMsg(err),true)}
+  };
+
+  return <div className="view">
+    <div className="view-head">
+      <div><h1>👥 إدارة الموظفين</h1><p>{isRealData?'إضافة وإدارة أطباء بيطريين وعمال':'موظفو مزرعتك التجريبية (بيانات وهمية للعرض)'}</p></div>
+      <ActionButton allowed={isOwner&&isRealData} reason="إدارة الموظفين متاحة لمالك المزرعة فقط" className="btn-solid" onClick={()=>setShowForm(true)}>+ إضافة موظف</ActionButton>
+    </div>
+
+    {showForm && isOwner && isRealData && <div className="card-box">
+      <h4>إضافة موظف جديد</h4>
+      <form onSubmit={handleAdd}>
+        <div className="form-grid-2">
+          <div className="field"><label>الاسم الكامل *</label><input value={formData.fullName} onChange={e=>setFormData({...formData,fullName:e.target.value})}/>{errors.fullName&&<span className="field-error">{errors.fullName}</span>}</div>
+          <div className="field"><label>البريد الإلكتروني *</label><input type="email" value={formData.email} onChange={e=>setFormData({...formData,email:e.target.value})}/>{errors.email&&<span className="field-error">{errors.email}</span>}</div>
+          <div className="field"><label>كلمة المرور *</label><input type="password" value={formData.password} onChange={e=>setFormData({...formData,password:e.target.value})}/>{errors.password&&<span className="field-error">{errors.password}</span>}</div>
+          <div className="field"><label>الدور</label><select value={formData.role} onChange={e=>setFormData({...formData,role:e.target.value})}><option value="Vet">بيطري</option><option value="Worker">عامل</option></select></div>
+        </div>
+        <div className="modal-actions"><button type="submit" className="btn btn-solid">حفظ</button><button type="button" className="btn btn-outline" onClick={()=>setShowForm(false)}>إلغاء</button></div>
+      </form>
+    </div>}
+
+    <div className="card-box">
+      <div className="table-scroll"><table><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th></tr></thead><tbody>{!staffList.length?<tr><td colSpan="3">لا يوجد موظفون</td></tr>:staffList.map(s=><tr key={s.id}><td>{s.fullName}</td><td>{s.email}</td><td>{getRoleDisplay(s.role)}</td></tr>)}</tbody></table></div>
+    </div>
+  </div>;
+}
+
+// ===== ALERTS =====
+function AlertsPage(){
+  const {alerts,setAlerts,hasPermission,isRealData}=useApp();
+  const resolveAlert=id=>{
+    if(!hasPermission('resolve_alerts')) return showToast('ليس لديك صلاحية لإصلاح التنبيهات',true);
+    setAlerts(alerts.map(a=>a.id===id?{...a,active:false,time:'تم الإصلاح'}:a));
+    showToast('تم إصلاح التنبيه');
+  };
+
+  return <div className="view">
+    <div className="view-head"><div><h1>📡 التنبيهات اللحظية</h1><p>تنبيهات المستشعرات</p></div></div>
+    <div className="card-box">
+      {!alerts.length
+        ? <div className="empty-state"><div className="es-ic">{isRealData?'📡':'🎉'}</div><div className="es-title">{isRealData?'لا يوجد بث حي من المستشعرات بعد':'لا توجد تنبيهات نشطة'}</div><div className="es-sub">{isRealData?'وصّل أجهزة استشعار المزرعة لتصلك التنبيهات هنا أولاً بأول.':'هذا مثال توضيحي — سجّل حسابك لتتابع تنبيهات مزرعتك الحقيقية.'}</div></div>
+        : alerts.map(a=><div key={a.id} className="alert-item">
+            <span className={'dot '+(a.active?'red':'gray')}></span>
+            <div className="body"><div><strong>{a.text}</strong></div><div className="meta">{a.time} · <span className={'badge '+(a.active?'active':'ok')}>{a.active?'نشط':'تم الحل'}</span></div></div>
+            <div>{a.active&&<ActionButton allowed={hasPermission('resolve_alerts')&&isRealData} reason="إصلاح التنبيهات متاح لمالك المزرعة والطبيب البيطري فقط" className="btn-outline" onClick={()=>resolveAlert(a.id)}>إصلاح التنبيه</ActionButton>}</div>
+          </div>)
+      }
+    </div>
+  </div>;
+}
+
+// ===== AUTH MODAL =====
+function AuthModal({onLogin}){
+  const [tab,setTab]=useState(window.__authTab||'login');
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [farmName,setFarmName]=useState('');
+  const [ownerName,setOwnerName]=useState('');
+  const [error,setError]=useState('');
+  const [submitting,setSubmitting]=useState(false);
+  const [touchedPassword,setTouchedPassword]=useState(false);
+
+  useEffect(()=>{
+    const sync=()=>setTab(window.__authTab||'login');
+    window.addEventListener('hs-auth-tab-change',sync);
+    return ()=>window.removeEventListener('hs-auth-tab-change',sync);
+  },[]);
+
+  const switchTab=t=>{setTab(t); setError('')};
+  const isPasswordValid=tab==='login'?password.length>0:passwordScore(password)===PasswordRules.length;
+
+  const resetRegisterFields=()=>{
+    setFarmName(''); setOwnerName(''); setPassword(''); setTouchedPassword(false);
+  };
+
+  const handleSubmit=async e=>{
+    e.preventDefault(); setError('');
+    if(!email.trim()) return setError('يرجى إدخال البريد الإلكتروني');
+    if(!isEmail(email.trim())) return setError('صيغة البريد الإلكتروني غير صحيحة');
+    if(!password) return setError('يرجى إدخال كلمة المرور');
+
+    if(tab==='register'){
+      if(!farmName.trim()) return setError('يرجى إدخال اسم المزرعة');
+      if(!ownerName.trim()) return setError('يرجى إدخال اسم المالك');
+      if(!isPasswordValid){setTouchedPassword(true); return setError('كلمة المرور لا تحقق كل الشروط المطلوبة')}
+    }
+
+    setSubmitting(true);
+    try{
+      if(tab==='login'){
+        await onLogin(email.trim(),password);
+        document.getElementById('authModal').classList.add('hidden');
+      }else{
+        const res=await axiosInstance.post(EP.register,{farmName:farmName.trim(),ownerName:ownerName.trim(),email:email.trim(),password});
+        if(res.data.accessToken){
+          persistSession(res.data);
+          window.location.reload();
+        }else{
+          showToast('تم إنشاء الحساب بنجاح، يمكنك تسجيل الدخول الآن');
+          switchTab('login'); resetRegisterFields();
+        }
+      }
+    }catch(err){
+      setError(errMsg(err,tab==='login'?'فشل تسجيل الدخول':'فشل إنشاء الحساب، حاول مرة أخرى'));
+    }finally{setSubmitting(false)}
+  };
+
+  return <div className="modal-overlay hidden" id="authModal">
+    <div className="modal">
+      <button className="modal-close" onClick={()=>document.getElementById('authModal').classList.add('hidden')}>✕</button>
+      <div className="auth-tabs">
+        <button className={'auth-tab '+(tab==='login'?'active':'')} onClick={()=>switchTab('login')}>تسجيل الدخول</button>
+        <button className={'auth-tab '+(tab==='register'?'active':'')} onClick={()=>switchTab('register')}>حساب جديد</button>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {tab==='register' && <>
+          <div className="field"><label>اسم المزرعة</label><input value={farmName} onChange={e=>setFarmName(e.target.value)} required /></div>
+          <div className="field"><label>اسم المالك</label><input value={ownerName} onChange={e=>setOwnerName(e.target.value)} required /></div>
+        </>}
+        <div className="field"><label>البريد الإلكتروني</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required /></div>
+        <div className="field">
+          <label>كلمة المرور</label>
+          <input type="password" value={password} onFocus={()=>setTouchedPassword(true)} onChange={e=>setPassword(e.target.value)} required />
+          {tab==='register' && (touchedPassword || password.length>0) && <PasswordChecklist password={password}/>}
+        </div>
+        {error && <div className="field-error">{error}</div>}
+        <div className="modal-actions">
+          <button type="submit" className="btn btn-solid" disabled={submitting || (tab==='register'&&!isPasswordValid)}>
+            {submitting?'...جاري المعالجة':tab==='login'?'دخول':'إنشاء الحساب'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>;
+}
+
+// ===== GLOBAL =====
+window.openAuthModal=(tab='login')=>{
+  const modal=document.getElementById('authModal');
+  if(!modal)return;
+  window.__authTab=tab;
+  modal.classList.remove('hidden');
+  window.dispatchEvent(new Event('hs-auth-tab-change'));
+};
+window.logout=logout;
+
+// ===== ROOT =====
+function Root(){
+  const handleLogin=async(email,password)=>{
+    const res=await axiosInstance.post(EP.login,{email,password});
+    persistSession(res.data);
+    window.location.reload();
+  };
+  return <><AuthModal onLogin={handleLogin}/><App/></>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root/>);
+</script>
+</body>
+</html>
